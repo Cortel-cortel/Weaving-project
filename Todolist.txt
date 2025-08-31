@@ -1,0 +1,29 @@
+php artisan make:migration ProductTable
+php artisan make:seeder CordilleraProductSeeder
+php artisan make:controller ProductController
+php artisan make:model Product
+
+php artisan db:seed
+
+email === "admin@example.com" && password === "admin123"
+
+npm install
+npm install react-router-dom
+npm install react-bootstrap bootstrap
+npm install react-icons
+
+controller `
+route`
+model`
+migration`
+seeder`
+
+View`
+Add`
+Delete`
+Edit`
+Search
+Filter 
+	-price
+	-category
+	-stock
