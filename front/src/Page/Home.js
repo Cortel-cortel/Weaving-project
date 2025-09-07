@@ -10,22 +10,21 @@ const products = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const [role] = useState(() => localStorage.getItem("role") || "user");
+  const [role] = useState(localStorage.getItem("role") || "user");
   const [startIndex, setStartIndex] = useState(0);
   const [hoverArrow, setHoverArrow] = useState("");
   const [hoverView, setHoverView] = useState(null);
 
-  // Carousel controls
-  const handlePrev = () =>
-    setStartIndex((prev) => (prev - 1 + products.length) % products.length);
+  const handlePrev = () => setStartIndex((prev) => (prev - 1 + products.length) % products.length);
+  const handleNext = () => setStartIndex((prev) => (prev + 1) % products.length);
 
-  const handleNext = () =>
-    setStartIndex((prev) => (prev + 1) % products.length);
-
-  // Navigate to product page or admin dashboard
-  const handleView = (productId) => {
-    if (role === "admin") navigate("/dashboard");
-    else navigate(`/product/${productId}`);
+  const handleView = (product) => {
+    if (role === "admin") {
+      navigate("/dashboard");
+    } else {
+      const category = product.id.toLowerCase().replace(/\d+$/, "");
+      navigate(`/products/${category}`);
+    }
   };
 
   const visibleProducts = [
@@ -47,19 +46,32 @@ const Home = () => {
         <div
           className="hero-text"
           style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             color: "white",
             fontSize: "3rem",
             textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
+            textAlign: "center",
           }}
         >
-          <h1>Welcome to Threaditional Weaving</h1>
+          <h1>Welcome to Threaditional</h1>
         </div>
       </div>
 
       {/* Carousel Section */}
       <div
         className="carousel-container"
-        style={{ overflow: "hidden", maxWidth: "100%", boxSizing: "border-box" }}
+        style={{
+          overflow: "hidden",
+          maxWidth: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          padding: "40px 0",
+        }}
       >
         {/* Left Arrow */}
         <button
@@ -67,7 +79,15 @@ const Home = () => {
           onClick={handlePrev}
           onMouseEnter={() => setHoverArrow("left")}
           onMouseLeave={() => setHoverArrow("")}
-          style={{ color: hoverArrow === "left" ? "#ff9999" : "#b71c1c" }}
+          style={{
+            position: "absolute",
+            left: "10px",
+            fontSize: "2rem",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: hoverArrow === "left" ? "#ff9999" : "#b71c1c",
+          }}
         >
           ❮
         </button>
@@ -81,24 +101,53 @@ const Home = () => {
             justifyContent: "center",
             alignItems: "center",
             flexWrap: "nowrap",
-            width: "100%",
+            width: "80%",
           }}
         >
           {visibleProducts.map((product) => (
-            <div key={product.id} className="card" style={{ flex: "0 0 auto" }}>
+            <div
+              key={product.id}
+              className="card"
+              style={{
+                flex: "0 0 auto",
+                borderRadius: "12px",
+                overflow: "hidden",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                textAlign: "center",
+                backgroundColor: "#fff",
+                transition: "transform 0.3s, box-shadow 0.3s",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.05)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+              }}
+            >
               <img
                 src={product.img}
                 alt={product.name}
                 style={{ width: "100%", height: "200px", objectFit: "cover" }}
               />
-              <h3>{product.name}</h3>
+              <h3 style={{ margin: "10px 0" }}>{product.name}</h3>
               <button
                 className="view-btn"
-                onClick={() => handleView(product.id)}
+                onClick={() => handleView(product)}
                 onMouseEnter={() => setHoverView(product.id)}
                 onMouseLeave={() => setHoverView(null)}
                 style={{
                   backgroundColor: hoverView === product.id ? "#ff9999" : "#b71c1c",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  marginBottom: "10px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  transition: "background-color 0.3s",
                 }}
               >
                 View
@@ -113,7 +162,15 @@ const Home = () => {
           onClick={handleNext}
           onMouseEnter={() => setHoverArrow("right")}
           onMouseLeave={() => setHoverArrow("")}
-          style={{ color: hoverArrow === "right" ? "#ff9999" : "#b71c1c" }}
+          style={{
+            position: "absolute",
+            right: "10px",
+            fontSize: "2rem",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: hoverArrow === "right" ? "#ff9999" : "#b71c1c",
+          }}
         >
           ❯
         </button>

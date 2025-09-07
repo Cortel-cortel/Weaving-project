@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckoutController;
 
 // =======================
 // Public Routes
@@ -36,12 +37,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // User-specific cart
-    Route::get('/cart', [CartController::class, 'index']);        // list current user's cart
-    Route::post('/cart', [CartController::class, 'store']);       // add item
-    Route::put('/cart/{id}', [CartController::class, 'update']);  // update quantity
-    Route::delete('/cart/{id}', [CartController::class, 'destroy']);      // remove item
-    Route::delete('/cart/clear', [CartController::class, 'destroyAll']);  // empty cart
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::delete('/cart/clear', [CartController::class, 'destroyAll']);
 
+
+       // Checkout route
+    Route::post('/checkout', [CheckoutController::class, 'store']);
+    
     // =======================
     // Admin Routes
     // =======================
@@ -56,8 +61,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
         // Product management
-        Route::post('/products', [ProductController::class, 'store']);       // create product
-        Route::put('/products/{id}', [ProductController::class, 'update']);  // update product
-        Route::delete('/products/{id}', [ProductController::class, 'destroy']); // delete product
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     });
 });

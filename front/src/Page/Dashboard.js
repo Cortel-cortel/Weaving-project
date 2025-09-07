@@ -6,10 +6,14 @@ import Filter from "../Component/Filter";
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 import { RiEdit2Fill, RiDeleteBin5Fill } from "react-icons/ri";
+import { FiLogOut } from "react-icons/fi";
 import Header from "../Component/Header";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function Dashboard() {
+export default function Dashboard({ handleLogout }) {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [error, setError] = useState(null);
@@ -120,8 +124,22 @@ export default function Dashboard() {
         </aside>
 
         <div className="view">
-          <h1>Dashboard</h1>
+          {/* Dashboard header with logout */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h1>Dashboard</h1>
+            <FiLogOut
+              size={24}
+              style={{ cursor: "pointer" }}
+              title="Logout"
+              onClick={() => {
+                handleLogout(); // Clear role and storage
+                navigate("/login"); // Redirect to login page
+              }}
+            />
+          </div>
+
           <Button className="addButton" onClick={handleAdd}>Add Product</Button>
+
           <Table>
             <thead>
               <tr>

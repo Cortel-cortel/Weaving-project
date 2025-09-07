@@ -1,147 +1,126 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Button, Table, Spinner, Alert } from "react-bootstrap";
+// src/Page/Cart.js
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Cart() {
-  const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Cart({ cart, setCart }) {
   const navigate = useNavigate();
 
-  // Fetch cart items from API
-  const fetchCartItems = async () => {
-    try {
-      const response = await axios.get("http://127.0.0.1:8000/api/cart");
-      setCartItems(response.data.data || []);
-    } catch (error) {
-      console.error("Error fetching cart items:", error);
-      alert("Failed to load cart items. Showing empty cart.");
-      setCartItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Run on mount
+  // Load cart from localStorage when component mounts
   useEffect(() => {
-    window.scrollTo(0, 0);
-    fetchCartItems();
-
-    // Listen to localStorage changes for real-time updates
-    const handleStorageChange = (e) => {
-      if (e.key === "cartUpdated") fetchCartItems();
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  // Update item quantity
-  const handleQuantityChange = async (id, quantity) => {
-    if (!quantity || quantity <= 0) return;
-
-    try {
-      await axios.put(`http://127.0.0.1:8000/api/cart/${id}`, { quantity });
-      setCartItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, quantity } : item))
-      );
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      alert("Failed to update quantity.");
+    const storedCart = localStorage.getItem("cart");
+    if (storedCart) {
+      setCart(JSON.parse(storedCart));
     }
-  };
+  }, [setCart]);
 
-  // Remove item from cart
-  const handleRemoveItem = async (id) => {
-    if (!window.confirm("Are you sure you want to remove this item from your cart?")) return;
-
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/cart/${id}`);
-      setCartItems((prev) => prev.filter((item) => item.id !== id));
-    } catch (error) {
-      console.error("Error removing item:", error);
-      alert("Failed to remove item.");
-    }
-  };
-
-  // Calculate total price
-  const calculateTotal = () =>
-    cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
-
-  // Checkout button
-  const handleCheckout = () => navigate("/checkout");
-
-  if (loading) {
+  if (!cart || cart.length === 0) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
-        <Spinner animation="border" variant="danger" />
-        <span className="ms-2">Loading your cart...</span>
+      <div style={{ textAlign: "center", marginTop: "100px", fontSize: "1.2rem" }}>
+        Your cart is empty.
       </div>
     );
   }
 
+  // Update quantity of a cart item
+  const handleQuantityChange = (productId, quantity) => {
+    if (quantity < 1) return;
+    const updatedCart = cart.map(item =>
+      item.id === productId ? { ...item, quantity } : item
+    );
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  // Remove an item from cart
+  const handleRemove = (productId) => {
+    const updatedCart = cart.filter(item => item.id !== productId);
+    setCart(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  // Calculate total price
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // Format price in PHP
+  const formatPHP = (amount) =>
+    `₱${Number(amount).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   return (
-    <div className="container" style={{ paddingTop: "90px", paddingBottom: "40px" }}>
-      <div className="mb-4">
-        <Button variant="secondary" onClick={() => navigate(-1)}>
-          ← Return
-        </Button>
+    <div style={{ maxWidth: "900px", margin: "100px auto 50px", padding: "20px" }}>
+      <h2 style={{ marginBottom: "30px" }}>Your Cart</h2>
+
+      {cart.map(item => (
+        <div key={item.id} style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "15px",
+          borderBottom: "1px solid #ccc"
+        }}>
+          <div style={{ flex: 2 }}>
+            <strong>{item.name}</strong>
+            <p style={{ margin: "5px 0", color: "#555" }}>{item.category}</p>
+          </div>
+
+          <div style={{ flex: 1 }}>
+            <input
+              type="number"
+              min="1"
+              value={item.quantity}
+              onChange={e => handleQuantityChange(item.id, Number(e.target.value))}
+              style={{ width: "60px", padding: "5px" }}
+            />
+          </div>
+
+          <div style={{ flex: 1 }}>
+            {formatPHP(item.price * item.quantity)}
+          </div>
+
+          <div style={{ flex: 0.5 }}>
+            <button
+              onClick={() => handleRemove(item.id)}
+              style={{
+                padding: "6px 12px",
+                backgroundColor: "#ff6666",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer"
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
+
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginTop: "30px",
+        fontSize: "1.2rem",
+        fontWeight: "bold"
+      }}>
+        <span>Total:</span>
+        <span>{formatPHP(totalPrice)}</span>
       </div>
 
-      <h1 className="mb-4 text-danger fw-bold">🛒 Your Shopping Cart</h1>
-
-      {cartItems.length === 0 ? (
-        <Alert variant="info" className="text-center">
-          Your cart is empty. <br /> Go back and add some items!
-        </Alert>
-      ) : (
-        <>
-          <Table responsive bordered hover className="shadow-sm rounded">
-            <thead className="table-dark">
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th style={{ width: "120px" }}>Quantity</th>
-                <th>Total</th>
-                <th style={{ width: "100px" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cartItems.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.name}</td>
-                  <td>{item.category}</td>
-                  <td>₱{item.price}</td>
-                  <td>
-                    <input
-                      type="number"
-                      min="1"
-                      max={item.stock}
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
-                      className="form-control text-center"
-                    />
-                  </td>
-                  <td>₱{(item.price * item.quantity).toFixed(2)}</td>
-                  <td className="text-center">
-                    <Button variant="danger" size="sm" onClick={() => handleRemoveItem(item.id)}>
-                      Remove
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-
-          <div className="d-flex justify-content-between align-items-center mt-4">
-            <h3 className="fw-bold">Total: ₱{calculateTotal()}</h3>
-            <Button variant="success" size="lg" className="px-4" onClick={handleCheckout}>
-              Proceed to Checkout →
-            </Button>
-          </div>
-        </>
-      )}
+      <button
+        onClick={() => navigate("/checkout")}
+        style={{
+          marginTop: "30px",
+          width: "100%",
+          padding: "12px",
+          backgroundColor: "#b71c1c",
+          color: "#fff",
+          fontWeight: "bold",
+          border: "none",
+          borderRadius: "8px",
+          cursor: "pointer"
+        }}
+      >
+        Proceed to Checkout
+      </button>
     </div>
   );
 }

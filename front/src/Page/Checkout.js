@@ -1,209 +1,146 @@
-import React, { useState, useEffect } from "react";
-import { Button, Form, Spinner, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import api from "./api"; // ✅ use axios instance
+// src/Page/Checkout.js
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-export default function Checkout() {
-  const [shippingDetails, setShippingDetails] = useState({
-    name: '',
-    address: '',
-    city: '',
-    country: '',
-  });
-  const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [cartItems, setCartItems] = useState([]);
+export default function Checkout({ cart, setCart }) {
   const navigate = useNavigate();
 
-  const totalPrice = cartItems.reduce(
-    (acc, item) => acc + item.quantity * item.price,
-    0
-  );
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setShippingDetails((prevDetails) => ({
-      ...prevDetails,
-      [name]: value,
-    }));
-  };
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const response = await api.get('/cart'); // ✅ fixed
-        setCartItems(response.data.data);
-      } catch (error) {
-        console.error('Error fetching cart items:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCartItems();
-  }, []);
+  const handleConfirmOrder = async (e) => {
+    e.preventDefault();
 
-  const handlePaymentChange = (e) => {
-    setPaymentMethod(e.target.value);
-  };
-
-  const handleConfirmOrder = async () => {
-    setLoading(true);
-    setErrorMessage('');
-
-    if (
-      !shippingDetails.name ||
-      !shippingDetails.address ||
-      !shippingDetails.city ||
-      !shippingDetails.country
-    ) {
-      setErrorMessage('Please fill out all shipping details.');
-      setLoading(false);
+    if (!customerName || !customerEmail || !customerPhone || !shippingAddress) {
+      setError("Please fill out all fields.");
       return;
     }
 
+    if (!cart || cart.length === 0) {
+      setError("Your cart is empty.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const items = cart.map((item) => ({
+      product_id: item.id || item.product_id,
+      quantity: Number(item.quantity) || 1,
+    }));
+
+    const payload = {
+      customer_name: customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone,
+      shipping_address: shippingAddress,
+      items,
+    };
+
     try {
-      await api.delete('/cart/clear'); // ✅ fixed
-      navigate('/user');
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      setErrorMessage('An error occurred during checkout. Please try again later.');
+      console.log("Checkout payload:", payload);
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/checkout",
+        payload,
+        { withCredentials: true }
+      );
+
+      console.log("Checkout response:", response.data);
+
+      if (response.data.success) {
+        alert("Order placed successfully!");
+        setCart([]);
+        localStorage.removeItem("cart");
+        navigate("/checkout-success");
+      } else {
+        setError(response.data.message || "An error occurred during checkout. Please try again.");
+      }
+    } catch (err) {
+      console.error("Checkout error full:", err);
+      const message =
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : null) ||
+        "An error occurred during checkout. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    if (window.confirm('Are you sure you want to cancel the order and return to the cart?')) {
-      navigate('/cart');
-    }
-  };
+  if (!cart || cart.length === 0) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "100px" }}>
+        Your cart is empty.
+      </div>
+    );
+  }
 
   return (
-    <div className="container mt-4">
-      <h1>Checkout</h1>
-      <Form>
-        <h3>Shipping Details</h3>
-        <Form.Group controlId="formName">
-          <Form.Label>Name</Form.Label>
-          <Form.Control
-            type="text"
-            name="name"
-            value={shippingDetails.name}
-            onChange={handleChange}
-            placeholder="Enter your name"
-            isInvalid={!shippingDetails.name && errorMessage}
-          />
-        </Form.Group>
-        <Form.Group controlId="formAddress">
-          <Form.Label>Address</Form.Label>
-          <Form.Control
-            type="text"
-            name="address"
-            value={shippingDetails.address}
-            onChange={handleChange}
-            placeholder="Enter your address"
-            isInvalid={!shippingDetails.address && errorMessage}
-          />
-        </Form.Group>
-        <Form.Group controlId="formCity">
-          <Form.Label>City</Form.Label>
-          <Form.Control
-            type="text"
-            name="city"
-            value={shippingDetails.city}
-            onChange={handleChange}
-            placeholder="Enter your city"
-            isInvalid={!shippingDetails.city && errorMessage}
-          />
-        </Form.Group>
-        <Form.Group controlId="formCountry">
-          <Form.Label>Country</Form.Label>
-          <Form.Control
-            type="text"
-            name="country"
-            value={shippingDetails.country}
-            onChange={handleChange}
-            placeholder="Enter your country"
-            isInvalid={!shippingDetails.country && errorMessage}
-          />
-        </Form.Group>
+    <div style={{ maxWidth: "700px", margin: "50px auto", padding: "20px", border: "1px solid #ddd", borderRadius: "10px" }}>
+      <h2 style={{ textAlign: "center", marginBottom: "30px" }}>Checkout</h2>
 
-        <h3>Payment Method</h3>
-        <Form.Check
-          type="radio"
-          label="Cash on Delivery"
-          name="paymentMethod"
-          value="cash"
-          checked={paymentMethod === 'cash'}
-          onChange={handlePaymentChange}
+      {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
+
+      <form onSubmit={handleConfirmOrder} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+          required
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={customerEmail}
+          onChange={(e) => setCustomerEmail(e.target.value)}
+          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+          required
+        />
+        <input
+          type="text"
+          placeholder="Phone Number"
+          value={customerPhone}
+          onChange={(e) => setCustomerPhone(e.target.value)}
+          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+          required
+        />
+        <textarea
+          placeholder="Shipping Address"
+          value={shippingAddress}
+          onChange={(e) => setShippingAddress(e.target.value)}
+          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc", minHeight: "80px" }}
+          required
         />
 
-        {errorMessage && (
-          <Alert variant="danger" className="mt-3">
-            {errorMessage}
-          </Alert>
-        )}
-
-        <div className="d-flex justify-content-between mt-3">
-          <Button variant="secondary" onClick={handleCancel}>
-            Cancel
-          </Button>
-
-          <Button
-            variant="primary"
-            onClick={handleConfirmOrder}
-            disabled={loading}
-          >
-            {loading ? <Spinner animation="border" size="sm" /> : 'Confirm Order'}
-          </Button>
+        <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginTop: "10px" }}>
+          Total: ₱{total.toFixed(2)}
         </div>
-      </Form>
 
-      <div
-        style={{
-          flex: 1,
-          border: "1px solid #ccc",
-          borderRadius: "8px",
-          padding: "20px",
-          backgroundColor: "#f9f9f9",
-          marginTop: "20px"
-        }}
-      >
-        <h3>Transaction Receipt</h3>
-        {cartItems.length === 0 ? (
-          <p>Your cart is empty.</p>
-        ) : (
-          <div>
-            {cartItems.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "10px",
-                }}
-              >
-                <span>
-                  {item.name} (x{item.quantity})
-                </span>
-                <span>${(item.quantity * item.price).toFixed(2)}</span>
-              </div>
-            ))}
-            <hr />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontWeight: "bold",
-              }}
-            >
-              <span>Total:</span>
-              <span>${totalPrice.toFixed(2)}</span>
-            </div>
-          </div>
-        )}
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            padding: "12px",
+            backgroundColor: "#b71c1c",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Processing..." : "Confirm Order"}
+        </button>
+      </form>
     </div>
   );
 }

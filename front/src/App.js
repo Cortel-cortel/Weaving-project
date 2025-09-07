@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
+// Pages
 import Login from "./Page/Login";
 import Register from "./Page/Register";
 import Dashboard from "./Page/Dashboard";
@@ -10,72 +11,54 @@ import Main from "./Page/Main";
 import Cart from "./Page/Cart";
 import Checkout from "./Page/Checkout";
 import CheckoutSuccess from "./Page/CheckoutSuccess";
+import ProductDetail from "./Page/ProductDetail";
 import ProductPage from "./Page/ProductPage";
 import FundraiserPage from "./Page/FundraiserPage";
 import FundraiserList from "./Page/FundraiserList";
+
+// Components
 import Navbar from "./Component/Navbar";
 
-function AppRoutes({ role, handleLogin, handleLogout }) {
+// Routes Component
+function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
   const location = useLocation();
   const hideNavbar = ["/", "/login", "/register"].includes(location.pathname);
 
-  // Redirect logged-in users away from login/register
-  if ((location.pathname === "/" || location.pathname === "/login") && role) {
-    return <Navigate to={role === "admin" ? "/dashboard" : "/home"} replace />;
-  }
+  const redirectIfLoggedIn = (targetForUser = "/home", targetForAdmin = "/dashboard") => {
+    if (role === "user") return <Navigate to={targetForUser} />;
+    if (role === "admin") return <Navigate to={targetForAdmin} />;
+    return null;
+  };
 
   return (
     <>
-      {/* Show Navbar only for user role and not on login/register */}
       {role === "user" && !hideNavbar && <Navbar handleLogout={handleLogout} />}
-
       <div className={role === "user" ? "with-navbar page-content" : ""}>
         <Routes>
           {/* Authentication */}
-          <Route
-            path="/"
-            element={
-              role === "user" ? (
-                <Navigate to="/home" />
-              ) : role === "admin" ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Login onLogin={handleLogin} />
-              )
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              role === "user" ? (
-                <Navigate to="/home" />
-              ) : role === "admin" ? (
-                <Navigate to="/dashboard" />
-              ) : (
-                <Login onLogin={handleLogin} />
-              )
-            }
-          />
+          <Route path="/" element={redirectIfLoggedIn() || <Login onLogin={handleLogin} />} />
+          <Route path="/login" element={redirectIfLoggedIn() || <Login onLogin={handleLogin} />} />
           <Route path="/register" element={<Register onLogin={handleLogin} />} />
 
           {/* Admin Routes */}
-          <Route path="/dashboard" element={role === "admin" ? <Dashboard /> : <Navigate to="/home" />} />
-          <Route path="/add-product" element={role === "admin" ? <AddProduct /> : <Navigate to="/home" />} />
+          <Route path="/dashboard" element={role === "admin" ? <Dashboard handleLogout={handleLogout} /> : <Navigate to="/login" />} />
+          <Route path="/add-product" element={role === "admin" ? <AddProduct /> : <Navigate to="/login" />} />
 
           {/* User Routes */}
-          <Route path="/home" element={role === "user" ? <Home role={role} /> : <Navigate to="/dashboard" />} />
+          <Route path="/home" element={role === "user" ? <Home /> : <Navigate to="/login" />} />
           <Route path="/user" element={<Main />} />
 
           {/* Product Pages */}
-          <Route path="/product/:productId" element={<ProductPage />} />
+          <Route path="/products/:productId" element={<ProductPage cart={cart} setCart={setCart} />} />
+          <Route path="/product/:productId" element={<ProductDetail cart={cart} setCart={setCart} />} />
 
-          {/* Fundraiser Pages */}
+          {/* Fundraiser */}
           <Route path="/fundraiser" element={<FundraiserPage />} />
           <Route path="/fundraiser-list" element={<FundraiserList />} />
 
-          {/* Cart / Checkout */}
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
+          {/* Cart & Checkout */}
+          <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
+          <Route path="/checkout" element={<Checkout cart={cart} setCart={setCart} />} />
           <Route path="/checkout-success" element={<CheckoutSuccess />} />
 
           {/* Fallback */}
@@ -86,8 +69,18 @@ function AppRoutes({ role, handleLogin, handleLogout }) {
   );
 }
 
+// Main App Component
 function App() {
   const [role, setRole] = useState(() => localStorage.getItem("role") || null);
+  const [cart, setCart] = useState(() => {
+    const storedCart = localStorage.getItem("cart");
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
+
+  // Sync cart with localStorage
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
 
   const handleLogin = (userData) => {
     const newRole = userData.isAdmin ? "admin" : "user";
@@ -97,13 +90,14 @@ function App() {
 
   const handleLogout = () => {
     setRole(null);
+    setCart([]);
     localStorage.clear();
     sessionStorage.clear();
   };
 
   return (
     <Router>
-      <AppRoutes role={role} handleLogin={handleLogin} handleLogout={handleLogout} />
+      <AppRoutes role={role} handleLogin={handleLogin} handleLogout={handleLogout} cart={cart} setCart={setCart} />
     </Router>
   );
 }

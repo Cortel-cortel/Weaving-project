@@ -1,14 +1,12 @@
+// ProductCard.js
 import React, { useState } from "react";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
-import { Toast, ToastContainer } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export default function ProductCard({ product }) {
   const [quantity, setQuantity] = useState(1);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const navigate = useNavigate();
 
   const getImageSrc = (name) => {
@@ -25,7 +23,7 @@ export default function ProductCard({ product }) {
     e.stopPropagation();
 
     try {
-      const { data } = await axios.get("http://127.0.0.1:8000/api/cart");
+      const { data } = await axios.get("http://127.0.0.1:8000/api/cart", { withCredentials: true });
       const existingItem = data.data.find((item) => item.product_id === product.id);
 
       if (existingItem) {
@@ -33,9 +31,8 @@ export default function ProductCard({ product }) {
         await axios.put(
           `http://127.0.0.1:8000/api/cart/${existingItem.id}`,
           { quantity: updatedQuantity },
-          { headers: { "Content-Type": "application/json" } }
+          { headers: { "Content-Type": "application/json" }, withCredentials: true }
         );
-        setToastMessage(`${product.name} quantity updated!`);
       } else {
         await axios.post(
           "http://127.0.0.1:8000/api/cart",
@@ -48,22 +45,47 @@ export default function ProductCard({ product }) {
             category: product.category,
             description: product.description,
           },
-          { headers: { "Content-Type": "application/json" } }
+          { headers: { "Content-Type": "application/json" }, withCredentials: true }
         );
-        setToastMessage(`${product.name} added to cart!`);
       }
 
       // Trigger Cart refresh
       localStorage.setItem("cartUpdated", Date.now());
 
-      setShowToast(true);
-
-      // Navigate after a short delay to show toast
-      setTimeout(() => navigate("/cart"), 800);
+      // Animate product to cart
+      animateToCart(e.target.closest(".product-card").querySelector("img"));
     } catch (error) {
       console.error("Cart Error:", error.response || error);
       alert("Failed to add to cart. Check console for details.");
     }
+  };
+
+  const animateToCart = (imgElement) => {
+    const cartIcon = document.querySelector("#cart-icon"); // Make sure your cart icon has this ID
+    if (!imgElement || !cartIcon) return;
+
+    const imgRect = imgElement.getBoundingClientRect();
+    const cartRect = cartIcon.getBoundingClientRect();
+
+    const clone = imgElement.cloneNode(true);
+    clone.style.position = "fixed";
+    clone.style.left = `${imgRect.left}px`;
+    clone.style.top = `${imgRect.top}px`;
+    clone.style.width = `${imgRect.width}px`;
+    clone.style.height = `${imgRect.height}px`;
+    clone.style.transition = "all 0.8s ease-in-out";
+    clone.style.zIndex = 1000;
+    document.body.appendChild(clone);
+
+    requestAnimationFrame(() => {
+      clone.style.left = `${cartRect.left}px`;
+      clone.style.top = `${cartRect.top}px`;
+      clone.style.width = "0px";
+      clone.style.height = "0px";
+      clone.style.opacity = 0;
+    });
+
+    clone.addEventListener("transitionend", () => clone.remove());
   };
 
   const handleViewDetails = () => {
@@ -108,12 +130,6 @@ export default function ProductCard({ product }) {
           Add to Cart
         </Button>
       </Card.Body>
-
-      <ToastContainer position="top-end" className="p-3">
-        <Toast show={showToast} onClose={() => setShowToast(false)} delay={1200} autohide>
-          <Toast.Body>{toastMessage}</Toast.Body>
-        </Toast>
-      </ToastContainer>
     </Card>
   );
 }
