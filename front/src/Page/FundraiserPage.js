@@ -1,3 +1,4 @@
+// src/Page/FundraiserPage.js
 import React, { useRef } from "react"; 
 import { Carousel, Button, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -16,9 +17,9 @@ export default function FundraiserPage() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ paddingTop: "80px" }}> {/* Added padding so navbar won’t cover content */}
+    <div style={{ paddingTop: "80px" }}>
       {/* Banner Carousel */}
-      <Carousel interval={3000} controls={true} indicators={true}>
+      <Carousel interval={3000} controls indicators>
         <Carousel.Item>
           <img src="/images/fundraiser-banner1.jpg" className="d-block w-100" alt="Banner 1" style={{ maxHeight: "500px", objectFit: "cover" }} />
         </Carousel.Item>
@@ -38,7 +39,7 @@ export default function FundraiserPage() {
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#b71c1c")}
           onClick={() => navigate("/fundraiser-list")}
         >
-          Donate
+          View All Fundraisers
         </Button>
 
         <Button
@@ -61,7 +62,7 @@ export default function FundraiserPage() {
       </div>
 
       {/* 6-Card Carousel */}
-      <Carousel interval={3000} controls={true} indicators={false}>
+      <Carousel interval={3000} controls indicators={false}>
         {fundraiserData.reduce((acc, _, index, array) => {
           if (index % 3 === 0) acc.push(array.slice(index, index + 3));
           return acc;
@@ -72,9 +73,13 @@ export default function FundraiserPage() {
                 <Card
                   key={fundraiser.id}
                   style={{ width: "300px", height: "320px", borderRadius: "10px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", cursor: "pointer" }}
-                  onClick={() => navigate("/fundraiser-list")}
+                  onClick={() => navigate(`/fundraiser/${fundraiser.id}`)}
                 >
-                  <Card.Img variant="top" src={fundraiser.image} style={{ height: "200px", objectFit: "cover", borderTopLeftRadius: "10px", borderTopRightRadius: "10px" }} />
+                  <Card.Img
+                    variant="top"
+                    src={fundraiser.image}
+                    style={{ height: "200px", objectFit: "cover", borderTopLeftRadius: "10px", borderTopRightRadius: "10px" }}
+                  />
                   <Card.Body>
                     <Card.Title>{fundraiser.name}</Card.Title>
                   </Card.Body>

@@ -1,17 +1,27 @@
-php artisan make:migration ProductTable
+Laravel Commands:
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan make:migration create_products_table
+php artisan migrate
 php artisan make:seeder CordilleraProductSeeder
-php artisan make:controller ProductController
+php artisan db:seed
 php artisan make:model Product
 php artisan make:controller CheckoutController
+php artisan serve
 
-php artisan db:seed
-
-email === "admin@example.com" && password === "admin123"
-
+React Commands:
 npm install
 npm install react-router-dom
+npm install axios
 npm install react-bootstrap bootstrap
 npm install react-icons
+npm start
+
+Xampp
+3307 
+
+email === "admin@example.com" && password === "admin123"
 
 controller `
 route`

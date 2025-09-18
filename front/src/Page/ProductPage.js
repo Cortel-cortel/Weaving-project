@@ -23,19 +23,18 @@ export default function ProductPage() {
 
   const videoIDs = ["VIDEO_ID_1", "VIDEO_ID_2", "VIDEO_ID_3", "VIDEO_ID_4", "VIDEO_ID_5", "VIDEO_ID_6"];
 
-  const productImages = {
-    "Ikat Table Runner": "/images/products/ikat-table_runner.jpg",
-    "Ikat Wall Hanging": "/images/products/ikat-wall_hanging.jpg",
-    "Ikat Tote Bag": "/images/products/ikat-tote_bag.jpg",
-    "Inabel Shawl": "/images/products/inabel-shawl.jpg",
-    "Inabel Blanket": "/images/products/inabel-blanket.jpg",
-    "Inabel Cushion Cover": "/images/products/inabel-cushion_cover.jpg",
-    "Kalinga Bag": "/images/products/kalinga-bag.jpg",
-    "Kalinga Table Mat": "/images/products/kalinga-table_mat.jpg",
-    "Kalinga Wall Decor": "/images/products/kalinga-wall_decor.jpg",
-  };
+    const productImages = {
+      "Cordillera Inabel Shawl": "/images/products/inabel-shawl.jpg",
+      "Cordillera Inabel Blanket": "/images/products/inabel-blanket.jpg",
+      "Cordillera Inabel Cushion Cover": "/images/products/inabel-cushion_cover.jpg",
+      "Ikat Table Runner": "/images/products/ikat-table_runner.jpg",
+      "Ikat Wall Hanging": "/images/products/ikat-wall_hanging.jpg",
+      "Ikat Tote Bag": "/images/products/ikat-tote_bag.jpg",
+      "Kalinga Weaving Bag": "/images/products/kalinga-bag.jpg",
+      "Kalinga Weaving Table Mat": "/images/products/kalinga-table_mat.jpg",
+      "Kalinga Weaving Wall Decor": "/images/products/kalinga-wall_decor.jpg",
+    };
 
-  // Fetch products from API
   useEffect(() => {
     axios.get("http://localhost:8000/api/products")
       .then(res => {
@@ -46,14 +45,12 @@ export default function ProductPage() {
       .catch(err => console.error("Error fetching products:", err));
   }, []);
 
-  // Scroll button visibility
   useEffect(() => {
     const handleScroll = () => setShowScroll(window.scrollY > 300);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Intro content for weaving types
   const intros = {
     kalinga: {
       title: "Kalinga Weaving",

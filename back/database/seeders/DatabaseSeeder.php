@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
         // Call the Cordillera products seeder and the Admin seeder
         $this->call([
             CordilleraProductSeeder::class,
-            AdminUserSeeder::class, // 👈 added this line
+            AdminUserSeeder::class, 
         ]);
     }
 }

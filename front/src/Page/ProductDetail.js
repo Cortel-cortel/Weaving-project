@@ -16,6 +16,72 @@ export default function ProductDetail({ cart, setCart }) {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [toastVisible, setToastVisible] = useState(false);
 
+  const productImages = {
+  "Cordillera Inabel Shawl": [
+    "/images/products/inabel-shawl.jpg",
+    "/images/products/inabel-shawl2.jpg",
+    "/images/products/inabel-shawl3.jpg",
+    "/images/products/inabel-shawl4.jpg",
+    "/images/products/inabel-shawl5.jpg"
+  ],
+  "Cordillera Inabel Blanket": [
+    "/images/products/inabel-blanket.jpg",
+    "/images/products/inabel-blanket2.jpg",
+    "/images/products/inabel-blanket3.jpg",
+    "/images/products/inabel-blanket4.jpg",
+    "/images/products/inabel-blanket5.jpg"
+  ],
+  "Cordillera Inabel Cushion Cover": [
+    "/images/products/inabel-cushion_cover.jpg",
+    "/images/products/inabel-cushion_cover2.jpg",
+    "/images/products/inabel-cushion_cover3.jpg",
+    "/images/products/inabel-cushion_cover4.jpg",
+    "/images/products/inabel-cushion_cover5.jpg"
+  ],
+  "Ikat Table Runner": [
+    "/images/products/ikat-table_runner.jpg",
+    "/images/products/ikat-table_runner2.jpg",
+    "/images/products/ikat-table_runner3.jpg",
+    "/images/products/ikat-table_runner4.jpg",
+    "/images/products/ikat-table_runner5.jpg"
+  ],
+  "Ikat Wall Hanging": [
+    "/images/products/ikat-wall_hanging.jpg",
+    "/images/products/ikat-wall_hanging2.jpg",
+    "/images/products/ikat-wall_hanging3.jpg",
+    "/images/products/ikat-wall_hanging4.jpg",
+    "/images/products/ikat-wall_hanging5.jpg"
+  ],
+  "Ikat Tote Bag": [
+    "/images/products/ikat-tote_bag.jpg",
+    "/images/products/ikat-tote_bag2.jpg",
+    "/images/products/ikat-tote_bag3.jpg",
+    "/images/products/ikat-tote_bag4.jpg",
+    "/images/products/ikat-tote_bag5.jpg"
+  ],
+  "Kalinga Weaving Bag": [
+    "/images/products/kalinga-bag.jpg",
+    "/images/products/kalinga-bag2.jpg",
+    "/images/products/kalinga-bag3.jpg",
+    "/images/products/kalinga-bag4.jpg",
+    "/images/products/kalinga-bag5.jpg"
+  ],
+  "Kalinga Weaving Table Mat": [
+    "/images/products/kalinga-table_mat.jpg",
+    "/images/products/kalinga-table_mat2.jpg",
+    "/images/products/kalinga-table_mat3.jpg",
+    "/images/products/kalinga-table_mat4.jpg",
+    "/images/products/kalinga-table_mat5.jpg"
+  ],
+  "Kalinga Weaving Wall Decor": [
+    "/images/products/kalinga-wall_decor.jpg",
+    "/images/products/kalinga-wall_decor2.jpg",
+    "/images/products/kalinga-wall_decor3.jpg",
+    "/images/products/kalinga-wall_decor4.jpg",
+    "/images/products/kalinga-wall_decor5.jpg"
+  ],
+};
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -73,7 +139,8 @@ export default function ProductDetail({ cart, setCart }) {
   if (error) return <div style={{ textAlign: "center", marginTop: "120px", color: "red" }}>{error}</div>;
   if (!product) return <div style={{ textAlign: "center", marginTop: "120px" }}>No product data available.</div>;
 
-  const images = product.imgs || ["/images/placeholder.png"];
+  // Use productImages array, then API images, then placeholder
+  const images = productImages[product.name] || (product.imgs?.length ? product.imgs : ["/images/placeholder.png"]);
 
   return (
     <div style={{ padding: "120px 20px 40px 20px", maxWidth: "1000px", margin: "0 auto" }}>
@@ -131,7 +198,11 @@ export default function ProductDetail({ cart, setCart }) {
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
             {similarProducts.map(sp => (
               <div key={sp.id} onClick={() => navigate(`/product/${sp.id}`)} style={{ cursor: "pointer", width: "200px", border: "1px solid #ddd", borderRadius: "10px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", textAlign: "center", padding: "10px" }}>
-                <img src={sp.imgs?.[0] || "/images/placeholder.png"} alt={sp.name} style={{ width: "100%", height: "150px", objectFit: "cover", borderRadius: "6px" }} />
+                <img 
+                  src={productImages[sp.name]?.[0] || sp.imgs?.[0] || "/images/placeholder.png"} 
+                  alt={sp.name} 
+                  style={{ width: "100%", height: "150px", objectFit: "cover", borderRadius: "6px" }} 
+                />
                 <p style={{ fontWeight: "bold", margin: "10px 0 5px 0" }}>{sp.name}</p>
                 <span style={{ color: "#b71c1c", fontWeight: "bold" }}>₱{Number(sp.price).toFixed(2)}</span>
               </div>

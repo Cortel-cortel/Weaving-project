@@ -14,12 +14,12 @@ import CheckoutSuccess from "./Page/CheckoutSuccess";
 import ProductDetail from "./Page/ProductDetail";
 import ProductPage from "./Page/ProductPage";
 import FundraiserPage from "./Page/FundraiserPage";
+import FundraiserDetail from "./Page/FundraiserDetail";
 import FundraiserList from "./Page/FundraiserList";
 
 // Components
 import Navbar from "./Component/Navbar";
 
-// Routes Component
 function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
   const location = useLocation();
   const hideNavbar = ["/", "/login", "/register"].includes(location.pathname);
@@ -41,8 +41,14 @@ function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
           <Route path="/register" element={<Register onLogin={handleLogin} />} />
 
           {/* Admin Routes */}
-          <Route path="/dashboard" element={role === "admin" ? <Dashboard handleLogout={handleLogout} /> : <Navigate to="/login" />} />
-          <Route path="/add-product" element={role === "admin" ? <AddProduct /> : <Navigate to="/login" />} />
+          <Route
+            path="/dashboard"
+            element={role === "admin" ? <Dashboard handleLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/add-product"
+            element={role === "admin" ? <AddProduct /> : <Navigate to="/login" />}
+          />
 
           {/* User Routes */}
           <Route path="/home" element={role === "user" ? <Home /> : <Navigate to="/login" />} />
@@ -52,9 +58,10 @@ function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
           <Route path="/products/:productId" element={<ProductPage cart={cart} setCart={setCart} />} />
           <Route path="/product/:productId" element={<ProductDetail cart={cart} setCart={setCart} />} />
 
-          {/* Fundraiser */}
+          {/* Fundraiser Pages */}
           <Route path="/fundraiser" element={<FundraiserPage />} />
           <Route path="/fundraiser-list" element={<FundraiserList />} />
+          <Route path="/fundraiser/:fundraiserId" element={<FundraiserDetail />} />
 
           {/* Cart & Checkout */}
           <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
@@ -69,7 +76,6 @@ function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
   );
 }
 
-// Main App Component
 function App() {
   const [role, setRole] = useState(() => localStorage.getItem("role") || null);
   const [cart, setCart] = useState(() => {
@@ -97,7 +103,13 @@ function App() {
 
   return (
     <Router>
-      <AppRoutes role={role} handleLogin={handleLogin} handleLogout={handleLogout} cart={cart} setCart={setCart} />
+      <AppRoutes
+        role={role}
+        handleLogin={handleLogin}
+        handleLogout={handleLogout}
+        cart={cart}
+        setCart={setCart}
+      />
     </Router>
   );
 }
