@@ -63,7 +63,6 @@ This project encourages local communities to practice food sovereignty and share
 Additionally, the initiative organizes workshops on organic farming, water management, and soil preservation. These programs aim to strengthen local economies, reduce environmental impact, and create models for sustainable agriculture in the Cordillera.`,
     images: ["/images/fundraiser6.jpg", "/images/fundraiser6_2.jpg"] 
   },
-  // Fundraiser 7
   { 
     id: 7, 
     name: "Cordillera Cultural Festival", 
@@ -74,7 +73,6 @@ Funds are used to stage performances, exhibitions, and workshops that educate vi
 Additionally, the festival encourages youth participation, helping the next generation to engage with their heritage and become ambassadors of Cordillera culture. Your donations ensure these vibrant celebrations continue to thrive.`,
     images: ["/images/fundraiser7.jpg", "/images/fundraiser7_2.jpg"]
   },
-  // Fundraiser 8
   { 
     id: 8, 
     name: "Mountain Conservation Project", 
@@ -85,7 +83,6 @@ This initiative works with local communities to preserve natural resources, redu
 Workshops and community programs are conducted to educate residents and visitors about environmental stewardship. Supporting this project ensures the Cordillera mountains remain a source of pride and sustenance for local communities.`,
     images: ["/images/fundraiser8.jpg", "/images/fundraiser8_2.jpg"]
   },
-  // Fundraiser 9
   { 
     id: 9, 
     name: "Indigenous Music Initiative", 
@@ -96,7 +93,6 @@ The initiative also records and archives rare musical traditions to ensure they 
 By fostering musical education among youth, the program cultivates new talent while preserving the heritage and identity of Cordillera communities. Your contribution keeps these rhythms alive for generations to come.`,
     images: ["/images/fundraiser9.jpg", "/images/fundraiser9_2.jpg"]
   },
-  // Fundraiser 10
   { 
     id: 10, 
     name: "Traditional Food Revival", 

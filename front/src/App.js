@@ -16,6 +16,7 @@ import ProductPage from "./Page/ProductPage";
 import FundraiserPage from "./Page/FundraiserPage";
 import FundraiserDetail from "./Page/FundraiserDetail";
 import FundraiserList from "./Page/FundraiserList";
+import ManageDonations from "./Page/ManageDonations"; // ✅ Added
 
 // Components
 import Navbar from "./Component/Navbar";
@@ -48,6 +49,10 @@ function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
           <Route
             path="/add-product"
             element={role === "admin" ? <AddProduct /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/donations" // ✅ Manage Donations Route
+            element={role === "admin" ? <ManageDonations handleLogout={handleLogout} /> : <Navigate to="/login" />}
           />
 
           {/* User Routes */}

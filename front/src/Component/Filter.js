@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Button, Form, Row, Col } from "react-bootstrap";
 
 export default function Filter({
-  onSearch = () => {}, // default noop function to avoid errors
-  categories = [], // default empty array
+  onSearch = () => {}, 
+  categories = [], 
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);

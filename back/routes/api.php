@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DonationController; 
 
 // =======================
 // Public Routes
@@ -15,6 +16,9 @@ use App\Http\Controllers\CheckoutController;
 // Product listing (all users)
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+// Donations (users can donate)
+Route::post('/donations', [DonationController::class, 'store']); 
 
 // Authentication
 Route::post('/register', [AuthController::class, 'register']);
@@ -43,8 +47,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::delete('/cart/clear', [CartController::class, 'destroyAll']);
 
-
-       // Checkout route
+    // Checkout route
     Route::post('/checkout', [CheckoutController::class, 'store']);
     
     // =======================
@@ -64,5 +67,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{id}', [ProductController::class, 'update']);
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+        // Donation management
+        Route::get('/donations', [DonationController::class, 'index']);      // List all donations
+        Route::get('/donations/{id}', [DonationController::class, 'show']); // View single donation
+        Route::delete('/donations/{id}', [DonationController::class, 'destroy']); // Delete donation
     });
 });

@@ -8,10 +8,8 @@ export default function Navbar({ onLogout }) {
   const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
 
-  // Show back button on all pages except /home
   const showBackButton = location.pathname !== "/home";
 
-  // Fetch cart count from API
   const fetchCartCount = async () => {
     try {
       const { data } = await axios.get("http://127.0.0.1:8000/api/cart");
