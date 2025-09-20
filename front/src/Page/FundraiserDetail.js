@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Carousel, Button, Form, Row, Col, Modal } from "react-bootstrap";
+import axios from "axios";
 
 const fundraiserList = [
   { 
@@ -106,31 +107,95 @@ The initiative fosters intergenerational knowledge transfer, ensuring that tradi
 ];
 
 export default function FundraiserDetail() {
+  // ✅ Get the fundraiser ID from the URL
   const { fundraiserId } = useParams();
-  const fundraiser = fundraiserList.find(f => f.id === parseInt(fundraiserId));
+
+  // ✅ Find the fundraiser from the list
+  const fundraiser = fundraiserList.find(
+    (f) => f.id === parseInt(fundraiserId)
+  );
+
+  // ----------------------
+  // Donation State & Handlers
+  // ----------------------
   const [showDonate, setShowDonate] = useState(false);
   const [thankYouVisible, setThankYouVisible] = useState(false);
-  const [donorData, setDonorData] = useState({ name: "", email: "", contact: "", amount: "", message: "" });
+  const [donorData, setDonorData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    amount: "",
+    message: "",
+  });
 
   if (!fundraiser) {
-    return <div style={{ textAlign: "center", marginTop: "120px" }}>Fundraiser not found.</div>;
+    return (
+      <div style={{ textAlign: "center", marginTop: "120px" }}>
+        Fundraiser not found.
+      </div>
+    );
   }
 
-  const handleInputChange = (e) => setDonorData({ ...donorData, [e.target.name]: e.target.value });
+// Handle input changes
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  setDonorData((prev) => ({ ...prev, [name]: value }));
+};
 
-  const handleDonateSubmit = (e) => {
-    e.preventDefault();
-    console.log("Donation Submitted:", donorData);
-    setThankYouVisible(true);
-    setShowDonate(false);
-    setDonorData({ name: "", email: "", contact: "", amount: "", message: "" });
+  // Submit donation
+const handleDonateSubmit = async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    name: donorData.name,
+    email: donorData.email || null, 
+    phone: donorData.phone,
+    amount: donorData.amount,
+    fundraiser: fundraiser.name,
+    message: donorData.message,
   };
 
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/api/donations",
+      payload,
+      { headers: { Accept: "application/json" } }
+    );
+
+      console.log("Donation saved:", response.data);
+
+    setThankYouVisible(true);
+    setDonorData({ name: "", email: "", phone: "", amount: "", message: "" });
+
+      setTimeout(() => {
+        setShowDonate(false);
+        setThankYouVisible(false);
+      }, 3000);
+
+  } catch (err) {
+    console.error("Donation error:", err);
+    if (err.response) {
+      alert(err.response.data.message || "Failed to save donation. Please check your input.");
+    } else if (err.request) {
+      alert("No response from server. Is backend running?");
+    } else {
+      alert("Something went wrong. Please try again.");
+    }
+  }
+};
+
   const handleShare = async () => {
-    const shareData = { title: fundraiser.name, text: `${fundraiser.name}\n\n${fundraiser.description}`, url: window.location.href };
+    const shareData = {
+      title: fundraiser.name,
+      text: `${fundraiser.name}\n\n${fundraiser.description}`,
+      url: window.location.href,
+    };
     if (navigator.share) {
-      try { await navigator.share(shareData); } 
-      catch (err) { console.error("Share failed:", err.message); }
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error("Share failed:", err.message);
+      }
     } else {
       navigator.clipboard.writeText(`${shareData.url}\n${shareData.text}`);
       alert("Link copied to clipboard!");
@@ -138,8 +203,21 @@ export default function FundraiserDetail() {
   };
 
   return (
-    <div style={{ padding: "120px 20px 50px 20px", maxWidth: "900px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "2.4rem", fontWeight: "bold", textAlign: "center", marginBottom: "30px" }}>
+    <div
+      style={{
+        padding: "120px 20px 50px 20px",
+        maxWidth: "900px",
+        margin: "0 auto",
+      }}
+    >
+      <h1
+        style={{
+          fontSize: "2.4rem",
+          fontWeight: "bold",
+          textAlign: "center",
+          marginBottom: "30px",
+        }}
+      >
         {fundraiser.name}
       </h1>
 
@@ -147,91 +225,137 @@ export default function FundraiserDetail() {
       <Carousel fade>
         {fundraiser.images.map((img, idx) => (
           <Carousel.Item key={idx}>
-            <img src={img} alt={`${fundraiser.name} ${idx + 1}`} style={{ width: "100%", height: "450px", objectFit: "cover", borderRadius: "12px" }} />
+            <img
+              src={img}
+              alt={`${fundraiser.name} ${idx + 1}`}
+              style={{
+                width: "100%",
+                height: "450px",
+                objectFit: "cover",
+                borderRadius: "12px",
+              }}
+            />
           </Carousel.Item>
         ))}
       </Carousel>
 
-      <p style={{ fontSize: "1.1rem", color: "#555", lineHeight: "1.6", marginTop: "25px" }}>
+      <p
+        style={{
+          fontSize: "1.1rem",
+          color: "#555",
+          lineHeight: "1.6",
+          marginTop: "25px",
+        }}
+      >
         {fundraiser.description}
       </p>
 
       <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
-        <Button variant="info" onClick={handleShare}>Share</Button>
-        <Button variant="success" onClick={() => setShowDonate(true)}>Donate</Button>
-      </div>
-
-{/* Donation Modal */}
-<Modal
-  show={showDonate}
-  onHide={() => {
-    setShowDonate(false);
-    setThankYouVisible(false); // Reset thank-you visibility when closing
-  }}
-  dialogClassName="donate-modal"
-  centered
-  style={{ marginTop: "25px" }}
->
-  <Modal.Header closeButton>
-    <Modal.Title>Donate to {fundraiser.name}</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    {!thankYouVisible ? (
-      <Form onSubmit={(e) => {
-        e.preventDefault();
-        console.log("Donation Submitted:", donorData);
-        setThankYouVisible(true);
-        setDonorData({ name: "", email: "", contact: "", amount: "", message: "" });
-
-        // Auto-close modal after 3 seconds
-        setTimeout(() => {
-          setShowDonate(false);
-          setThankYouVisible(false);
-        }, 3000);
-      }}>
-        <Row className="mb-3">
-          <Col>
-            <Form.Label>Name</Form.Label>
-            <Form.Control type="text" name="name" value={donorData.name} onChange={handleInputChange} required />
-          </Col>
-          <Col>
-            <Form.Label>Email</Form.Label>
-            <Form.Control type="email" name="email" value={donorData.email} onChange={handleInputChange} required />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col>
-            <Form.Label>Contact Number</Form.Label>
-            <Form.Control type="text" name="contact" value={donorData.contact} onChange={handleInputChange} required />
-          </Col>
-          <Col>
-            <Form.Label>Amount (₱)</Form.Label>
-            <Form.Control type="number" name="amount" value={donorData.amount} onChange={handleInputChange} min="1" required />
-          </Col>
-        </Row>
-        <Form.Group className="mb-3">
-          <Form.Label>Message (Optional)</Form.Label>
-          <Form.Control as="textarea" name="message" value={donorData.message} onChange={handleInputChange} rows={3} />
-        </Form.Group>
-        <Button type="submit" variant="success" style={{ width: "100%" }}>Donate</Button>
-      </Form>
-    ) : (
-      <div style={{ textAlign: "center", padding: "30px" }}>
-        <h4>Thank you for your donation!</h4>
-        <p>Your support helps sustain the fundraiser and empower communities.</p>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setShowDonate(false);
-            setThankYouVisible(false);
-          }}
-        >
-          Close
+        <Button variant="info" onClick={handleShare}>
+          Share
+        </Button>
+        <Button variant="success" onClick={() => setShowDonate(true)}>
+          Donate
         </Button>
       </div>
-    )}
-  </Modal.Body>
-</Modal>
+
+      {/* Donation Modal */}
+      <Modal
+        show={showDonate}
+        onHide={() => {
+          setShowDonate(false);
+          setThankYouVisible(false);
+        }}
+        dialogClassName="donate-modal"
+        centered
+        style={{ marginTop: "25px" }}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Donate to {fundraiser.name}</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {thankYouVisible ? (
+            <div style={{ textAlign: "center", padding: "30px" }}>
+              <h4>Thank you for your donation!</h4>
+              <p>Your support helps sustain the fundraiser and empower communities.</p>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setShowDonate(false);
+                  setThankYouVisible(false);
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          ) : (
+            <Form onSubmit={handleDonateSubmit}>
+              <Row className="mb-3">
+              <Col>
+    <Form.Label>Name</Form.Label>
+    <Form.Control
+      type="text"
+      name="name"
+      value={donorData.name}
+      onChange={handleInputChange}
+      required
+    />
+  </Col>
+                <Col>
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    value={donorData.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </Col>
+              </Row>
+
+              <Row className="mb-3">
+                <Col>
+                   <Form.Label>Contact Number</Form.Label>
+    <Form.Control
+      type="text"
+      name="phone"   
+      value={donorData.phone}
+      onChange={handleInputChange}
+      required
+    />
+                </Col>
+                <Col>
+                  <Form.Label>Amount (₱)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="amount"
+                    value={donorData.amount}
+                    onChange={handleInputChange}
+                    min="1"
+                    required
+                  />
+                </Col>
+              </Row>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Message (Optional)</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  name="message"
+                  value={donorData.message}
+                  onChange={handleInputChange}
+                  rows={3}
+                />
+              </Form.Group>
+
+              <Button type="submit" variant="success" style={{ width: "100%" }}>
+                Donate
+              </Button>
+            </Form>
+          )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 // src/Page/ManageDonations.js
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 import { FiLogOut } from "react-icons/fi";
@@ -8,6 +7,8 @@ import { RiDeleteBin5Fill } from "react-icons/ri";
 import DeletePrompt from "../Component/DeletePrompt";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+
+import api from "./api"; // ✅ use centralized axios instance
 
 export default function ManageDonations({ handleLogout }) {
   const navigate = useNavigate();
@@ -18,37 +19,58 @@ export default function ManageDonations({ handleLogout }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  // Fetch donations
+  // ✅ Redirect if no token
   useEffect(() => {
-    const fetchDonations = async () => {
-      try {
-        const response = await axios.get("http://127.0.0.1:8000/api/donations");
-        setDonations(response.data.data || []); // fallback to empty array
-      } catch {
-        setError("Failed to fetch donations.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
+  // Fetch donations
+  const fetchDonations = async () => {
+    try {
+      const response = await api.get("/donations"); // ✅ no need headers
+      setDonations(response.data.data || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch donations.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDonations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Delete donation
+  // Open delete modal
   const handleDelete = (id) => {
     setSelectedId(id);
     setShowDeleteModal(true);
   };
 
+  // Confirm delete
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/donations/${selectedId}`);
-      setDonations(donations.filter((donation) => donation.id !== selectedId));
-    } catch {
+      await api.delete(`/donations/${selectedId}`); // ✅ no headers
+      await fetchDonations();
+    } catch (err) {
+      console.error(err);
       setError("Failed to delete donation.");
     } finally {
       setShowDeleteModal(false);
     }
+  };
+
+  // Handle logout
+  const doLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
+    sessionStorage.clear();
+    if (handleLogout) handleLogout();
+    navigate("/login", { replace: true });
   };
 
   if (loading) return <div className="loadingScreen">Loading...</div>;
@@ -76,10 +98,7 @@ export default function ManageDonations({ handleLogout }) {
             size={24}
             style={{ cursor: "pointer" }}
             title="Logout"
-            onClick={() => {
-              handleLogout();
-              navigate("/login");
-            }}
+            onClick={doLogout}
           />
         </div>
       </nav>

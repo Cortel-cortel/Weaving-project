@@ -5,10 +5,13 @@ php artisan key:generate
 php artisan make:migration create_products_table
 php artisan migrate
 php artisan make:seeder CordilleraProductSeeder
+php artisan db:seed --class=AdminSeeder
 php artisan db:seed
 php artisan make:model Product
 php artisan make:controller CheckoutController
 php artisan serve
+
+php artisan migrate --path=/database/migrations/2025_09_19_080001_create_donations_table.php
 
 React Commands:
 npm install

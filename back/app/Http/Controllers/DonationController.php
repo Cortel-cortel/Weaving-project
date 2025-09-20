@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class DonationController extends Controller
 {
     /**
-     * Store a new donation (public).
+     * Store a new donation (public access).
      */
     public function store(Request $request)
     {
@@ -33,7 +33,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Display a listing of donations (admin only).
+     * List all donations (public access).
      */
     public function index()
     {
@@ -46,7 +46,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Display a specific donation (admin only).
+     * Show a specific donation (public access).
      */
     public function show($id)
     {
@@ -59,7 +59,7 @@ class DonationController extends Controller
     }
 
     /**
-     * Remove a donation (admin only).
+     * Delete a donation (public access).
      */
     public function destroy($id)
     {

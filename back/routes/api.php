@@ -7,18 +7,22 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\DonationController; 
+use App\Http\Controllers\DonationController;
+use App\Http\Controllers\OrderController;
 
 // =======================
 // Public Routes
 // =======================
 
-// Product listing (all users)
+// Product listing
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 
-// Donations (users can donate)
-Route::post('/donations', [DonationController::class, 'store']); 
+// Donations
+Route::post('/donations', [DonationController::class, 'store']);
+Route::get('/donations', [DonationController::class, 'index']);
+Route::get('/donations/{id}', [DonationController::class, 'show']);
+Route::delete('/donations/{id}', [DonationController::class, 'destroy']);
 
 // Authentication
 Route::post('/register', [AuthController::class, 'register']);
@@ -29,9 +33,7 @@ Route::post('/login', [AuthController::class, 'login']);
 // =======================
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    // =======================
-    // User Routes
-    // =======================
+    // User info
     Route::get('/user', function (Request $request) {
         return response()->json([
             'success' => true,
@@ -40,22 +42,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ]);
     });
 
-    // User-specific cart
+    // Cart routes
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::delete('/cart/clear', [CartController::class, 'destroyAll']);
 
-    // Checkout route
+    // Checkout
     Route::post('/checkout', [CheckoutController::class, 'store']);
-    
+
+    // Orders accessible by any authenticated user
+    Route::get('/orders', [OrderController::class, 'index']);      
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+
     // =======================
-    // Admin Routes
+    // Admin-only routes
     // =======================
     Route::middleware('admin')->group(function () {
 
-        // Admin dashboard
         Route::get('/dashboard', function () {
             return response()->json([
                 'success' => true,
@@ -68,9 +73,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/products/{id}', [ProductController::class, 'update']);
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-        // Donation management
-        Route::get('/donations', [DonationController::class, 'index']);      // List all donations
-        Route::get('/donations/{id}', [DonationController::class, 'show']); // View single donation
-        Route::delete('/donations/{id}', [DonationController::class, 'destroy']); // Delete donation
+        // Admin-only order updates/deletes
+        Route::put('/orders/{id}', [OrderController::class, 'update']); 
+        Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
     });
 });

@@ -181,7 +181,7 @@ export default function Dashboard({ handleLogout }) {
       >
         <h2 style={{ margin: 0 }}>Admin Dashboard</h2>
         <div style={{ display: "flex", gap: "15px" }}>
-          <Button variant="light" onClick={() => navigate("/orders")}>
+          <Button variant="light" onClick={() => navigate("/manage-orders")}>
             Manage Orders
           </Button>
           <Button variant="light" onClick={() => navigate("/donations")}>
@@ -332,7 +332,7 @@ export default function Dashboard({ handleLogout }) {
                     type="text"
                     name="barcode"
                     value={productData.barcode}
-                    readOnly // 🔹 read-only
+                    readOnly
                   />
                 </Form.Group>
               </Col>
@@ -352,7 +352,6 @@ export default function Dashboard({ handleLogout }) {
                     <option value="Cordillera Inabel">Cordillera Inabel</option>
                     <option value="Kalinga Weaving">Kalinga Weaving</option>
                     <option value="Ikat">Ikat</option>
-
                   </Form.Select>
                 </Form.Group>
               </Col>

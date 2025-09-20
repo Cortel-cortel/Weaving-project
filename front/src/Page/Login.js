@@ -12,29 +12,28 @@ function Login({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!email || !password) {
       alert("Please enter email and password");
       return;
     }
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/login", {
+      const { data } = await axios.post("http://127.0.0.1:8000/api/login", {
         email,
         password,
       });
 
-      if (response.data.success) {
-        // Save user info (including role) in state/context
-        onLogin(response.data);
+      if (data.success) {
+        // Save token and role
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("isAdmin", data.isAdmin);
 
-        // Redirect based on backend's instruction
-        // Admin → /dashboard
-        // User → /home
-        if (response.data.isAdmin) {
-          navigate("/dashboard");
-        } else {
-          navigate("/home");
-        }
+        // Trigger parent login handler
+        onLogin(data);
+
+        // Redirect based on role
+        navigate(data.isAdmin ? "/dashboard" : "/home", { replace: true });
       } else {
         alert("Invalid email or password");
       }

@@ -3,16 +3,23 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "../App.css";
 
-export default function Navbar({ onLogout }) {
+export default function Navbar({ onLogout, role }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [cartCount, setCartCount] = useState(0);
 
   const showBackButton = location.pathname !== "/home";
 
+  // Fetch cart count (only for users)
   const fetchCartCount = async () => {
     try {
-      const { data } = await axios.get("http://127.0.0.1:8000/api/cart");
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const { data } = await axios.get("http://127.0.0.1:8000/api/cart", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       const totalItems = data.data.reduce((acc, item) => acc + item.quantity, 0);
       setCartCount(totalItems);
     } catch (error) {
@@ -21,18 +28,27 @@ export default function Navbar({ onLogout }) {
   };
 
   useEffect(() => {
-    fetchCartCount();
-    const interval = setInterval(fetchCartCount, 3000); // refresh every 3 seconds
-    return () => clearInterval(interval);
-  }, []);
+    if (role === "user") {
+      fetchCartCount();
+      const interval = setInterval(fetchCartCount, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [role]);
 
+  // Logout function
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("isAdmin");
     sessionStorage.clear();
-    if (onLogout) onLogout();
+
+    if (typeof onLogout === "function") onLogout();
+
     navigate("/login", { replace: true });
-    window.location.reload();
   };
+
+  // Show navbar only for users
+  if (role !== "user") return null;
 
   return (
     <nav

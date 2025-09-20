@@ -15,6 +15,19 @@ class Order extends Model
         'customer_email',
         'customer_phone',
         'shipping_address',
-        'total'
+        'total',
+        'status',
     ];
+
+    // One order has many items
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    // Optional: link order to user
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
