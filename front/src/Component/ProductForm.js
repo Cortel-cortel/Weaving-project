@@ -1,84 +1,71 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import axios from "axios";
-import "../App.css";
+import { useNavigate } from "react-router-dom";
 
-export default function ProductForm({ product = null }) {
+export default function ProductForm() {
   const navigate = useNavigate();
 
-  // Form state
-  const [name, setName] = useState(product?.name || "");
-  const [description, setDescription] = useState(product?.description || "");
-  const [category, setCategory] = useState(product?.category || "");
-  const [price, setPrice] = useState(product?.price || "");
-  const [stock, setStock] = useState(product?.stock || "");
-  const [images, setImages] = useState([]); // New images selected
-  const [previewImages, setPreviewImages] = useState(
-    product?.images || []
-  ); // For both existing and new images
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("");
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Handle multiple image selection
-  const handleImagesChange = (e) => {
-    const files = Array.from(e.target.files);
-    setImages(files);
-
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreviewImages(previews);
+  // Image preview
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+      setPreview(URL.createObjectURL(e.target.files[0]));
+    }
   };
 
-  // Handle form submission
+  // Submit product
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (!name || !description || !category || !price || !stock) {
-      setError("Please fill in all fields.");
+    if (!name || !price || !stock) {
+      setError("Please fill in all required fields.");
       setLoading(false);
       return;
     }
 
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("category", category);
-    formData.append("price", price);
-    formData.append("stock", stock);
-    images.forEach((img) => formData.append("images[]", img));
-
     try {
-      const token = localStorage.getItem("userToken");
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("category", category);
+      formData.append("price", price);
+      formData.append("stock", stock);
+      if (image) formData.append("image", image);
 
-      if (product) {
-        // EDIT mode
-        await axios.post(
-          `http://127.0.0.1:8000/api/products/${product.id}?_method=PUT`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        alert("Product updated successfully!");
-      } else {
-        // ADD mode
-        await axios.post("http://127.0.0.1:8000/api/products", formData, {
+      const token = localStorage.getItem("userToken"); // admin token required
+
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/products",
+        formData,
+        {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,
           },
-        });
-        alert("Product added successfully!");
-      }
+        }
+      );
 
+      alert("Product added successfully!");
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      setError("Failed to save product. Please try again.");
+      console.error(err.response);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError("Unauthorized. Make sure you are logged in as admin.");
+      } else {
+        setError(err.response?.data?.message || "Failed to save product.");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,75 +73,56 @@ export default function ProductForm({ product = null }) {
 
   return (
     <div className="form-wrapper">
-      <h2>{product ? "Edit Product" : "Add New Product"}</h2>
+      <h2>Add New Product</h2>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <form onSubmit={handleSubmit}>
-        {error && <p className="error-text">{error}</p>}
-
         <input
           type="text"
           placeholder="Product Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          required
         />
-
         <textarea
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-
         <input
           type="text"
           placeholder="Category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
-
         <input
           type="number"
           placeholder="Price"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
+          required
         />
-
         <input
           type="number"
           placeholder="Stock"
           value={stock}
           onChange={(e) => setStock(e.target.value)}
+          required
         />
-
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleImagesChange}
-        />
-
-        {/* Image previews */}
-        {previewImages.length > 0 && (
-          <div
-            className="preview-images"
-            style={{ display: "flex", gap: "10px", marginTop: "10px" }}
-          >
-            {previewImages.map((src, idx) => (
-              <img
-                key={idx}
-                src={src}
-                alt={`preview-${idx}`}
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  objectFit: "cover",
-                  borderRadius: "5px",
-                }}
-              />
-            ))}
-          </div>
+        <input type="file" accept="image/*" onChange={handleImageChange} />
+        {preview && (
+          <img
+            src={preview}
+            alt="preview"
+            style={{
+              width: "120px",
+              height: "120px",
+              marginTop: "10px",
+              objectFit: "cover",
+            }}
+          />
         )}
-
         <button type="submit" disabled={loading}>
-          {loading ? (product ? "Updating..." : "Adding...") : product ? "Update Product" : "Add Product"}
+          {loading ? "Adding..." : "Add Product"}
         </button>
       </form>
     </div>

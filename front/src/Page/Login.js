@@ -1,4 +1,3 @@
-// Login.js
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -25,14 +24,11 @@ function Login({ onLogin }) {
       });
 
       if (data.success) {
-        // Save token and role
         localStorage.setItem("token", data.token);
         localStorage.setItem("isAdmin", data.isAdmin);
 
-        // Trigger parent login handler
         onLogin(data);
 
-        // Redirect based on role
         navigate(data.isAdmin ? "/dashboard" : "/home", { replace: true });
       } else {
         alert("Invalid email or password");

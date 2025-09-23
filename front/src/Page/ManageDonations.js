@@ -1,4 +1,3 @@
-// src/Page/ManageDonations.js
 import React, { useEffect, useState } from "react";
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
@@ -8,7 +7,7 @@ import DeletePrompt from "../Component/DeletePrompt";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import api from "./api"; // ✅ use centralized axios instance
+import api from "./api"; 
 
 export default function ManageDonations({ handleLogout }) {
   const navigate = useNavigate();
@@ -19,7 +18,6 @@ export default function ManageDonations({ handleLogout }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  // ✅ Redirect if no token
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {

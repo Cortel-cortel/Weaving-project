@@ -35,7 +35,6 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* Hero Section */}
       <div className="hero-section" style={{ height: "50vh", position: "relative" }}>
         <img
           src="/images/hero-banner.jpg"
@@ -60,7 +59,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Carousel Section */}
       <div
         className="carousel-container"
         style={{
@@ -73,7 +71,6 @@ const Home = () => {
           padding: "40px 0",
         }}
       >
-        {/* Left Arrow */}
         <button
           className="arrow-btn left"
           onClick={handlePrev}
@@ -92,7 +89,6 @@ const Home = () => {
           ❮
         </button>
 
-        {/* Product Cards */}
         <div
           className="carousel"
           style={{
@@ -156,7 +152,6 @@ const Home = () => {
           ))}
         </div>
 
-        {/* Right Arrow */}
         <button
           className="arrow-btn right"
           onClick={handleNext}

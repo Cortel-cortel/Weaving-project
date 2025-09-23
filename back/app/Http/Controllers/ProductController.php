@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
@@ -16,101 +17,84 @@ class ProductController extends Controller
     }
 
     // Add a new product
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        try {
-            $request->validate([
-                'barcode' => 'required|unique:products,barcode',
-                'name' => 'required|unique:products,name',
-                'price' => 'required|numeric|min:0',
-                'stock' => 'required|integer|min:0',
-                'category' => 'nullable|string|max:255',
-                'description' => 'nullable|string',
-                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ]);
-
-            $data = $request->only(['barcode','name','price','stock','category','description']);
-
-            // Handle multiple image uploads
-            $imagePaths = [];
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $file) {
-                    $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                    $path = $file->storeAs('products', $originalName, 'public');
-                    $imagePaths[] = $path;
-                }
-            }
-            $data['images'] = json_encode($imagePaths);
-
-            $product = Product::create($data);
-            return response()->json(['message' => 'Product created successfully', 'data' => $product], 201);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
-        }
-    }
-
-    // Get a single product
-    public function show(int $id): JsonResponse
-    {
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
-        }
-        return response()->json(['data' => $product], 200);
-    }
-
-    // Update a product
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
-        }
-
-        $validatedData = $request->validate([
-            'barcode' => 'required|unique:products,barcode,' . $id,
-            'name' => 'required|string|max:255',
+        $request->validate([
+            'name' => 'required|string|unique:products,name',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Handle multiple image uploads
-        if ($request->hasFile('images')) {
-            $imagePaths = [];
-            foreach ($request->file('images') as $file) {
-                $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                $path = $file->storeAs('products', $originalName, 'public');
-                $imagePaths[] = $path;
-            }
-            $validatedData['images'] = json_encode($imagePaths);
+        $data = $request->only(['name', 'price', 'stock', 'category', 'description']);
+
+        if ($request->hasFile('image')) {
+            $filename = time().'_'.$request->file('image')->getClientOriginalName();
+            $path = $request->file('image')->storeAs('products', $filename, 'public');
+            $data['image'] = $path;
         }
 
-        $product->update($validatedData);
+        $product = Product::create($data);
+
+        return response()->json(['message' => 'Product created successfully', 'data' => $product], 201);
+    }
+
+    // Get single product
+    public function show($id): JsonResponse
+    {
+        $product = Product::find($id);
+        if (!$product) return response()->json(['error' => 'Product not found'], 404);
+
+        return response()->json(['data' => $product], 200);
+    }
+
+    // Update product
+    public function update(Request $request, $id): JsonResponse
+    {
+        $product = Product::find($id);
+        if (!$product) return response()->json(['error' => 'Product not found'], 404);
+
+        $request->validate([
+            'name' => 'required|string|unique:products,name,'.$id,
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $data = $request->only(['name', 'price', 'stock', 'category', 'description']);
+
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $filename = time().'_'.$request->file('image')->getClientOriginalName();
+            $path = $request->file('image')->storeAs('products', $filename, 'public');
+            $data['image'] = $path;
+        }
+
+        $product->update($data);
+
         return response()->json(['message' => 'Product updated successfully', 'data' => $product], 200);
     }
 
-    // Delete a product
-    public function destroy(int $id): JsonResponse
+    // Delete product
+    public function destroy($id): JsonResponse
     {
         $product = Product::find($id);
-        if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
-        }
+        if (!$product) return response()->json(['error' => 'Product not found'], 404);
 
-        // Delete all images
-        if ($product->images) {
-            $images = json_decode($product->images, true);
-            foreach ($images as $img) {
-                if (\Storage::disk('public')->exists($img)) {
-                    \Storage::disk('public')->delete($img);
-                }
-            }
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
+
         return response()->json(['message' => 'Product deleted successfully'], 200);
     }
 }

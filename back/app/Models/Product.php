@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'barcode',
         'name',
@@ -15,5 +16,6 @@ class Product extends Model
         'stock',
         'category',
         'description',
+        'image', // ✅ singular, matches controller & frontend
     ];
 }

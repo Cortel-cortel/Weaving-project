@@ -71,23 +71,21 @@ class OrderController extends Controller
         ]);
     }
 
-    // Update order status
+    // Update order status (public-safe)
     public function update(Request $request, $id)
     {
-        try {
-            $request->validate([
-                'status' => 'required|string|in:Pending,Processing,Completed,Cancelled'
-            ]);
+        $order = Order::find($id);
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
 
-            $order = Order::find($id);
-            if (!$order) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Order not found'
-                ], 404);
-            }
+        $newStatus = $request->input('status');
 
-            $order->status = $request->status;
+        if ($newStatus && in_array($newStatus, ['Pending', 'Processing', 'Completed', 'Cancelled'])) {
+            $order->status = $newStatus;
             $order->save();
 
             return response()->json([
@@ -95,16 +93,15 @@ class OrderController extends Controller
                 'message' => 'Order updated successfully',
                 'data' => $order
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update order',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid or missing status'
+        ], 400);
     }
 
-    // Delete an order
+    // Delete an order (public-safe)
     public function destroy($id)
     {
         $order = Order::find($id);

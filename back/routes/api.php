@@ -29,6 +29,12 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // =======================
+// Public access to order updates/deletes
+// =======================
+Route::put('/orders/{id}', [OrderController::class, 'update']); 
+Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
+
+// =======================
 // Protected Routes (Authenticated Users)
 // =======================
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -72,9 +78,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{id}', [ProductController::class, 'update']);
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-
-        // Admin-only order updates/deletes
-        Route::put('/orders/{id}', [OrderController::class, 'update']); 
-        Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
     });
 });
