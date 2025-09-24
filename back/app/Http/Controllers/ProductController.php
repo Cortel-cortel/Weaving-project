@@ -12,33 +12,12 @@ class ProductController extends Controller
     // List all products
     public function index(): JsonResponse
     {
-        $products = Product::all();
+        $products = Product::all()->map(function ($product) {
+            $product->image_url = $product->image ? asset('storage/' . $product->image) : null;
+            return $product;
+        });
+
         return response()->json(['data' => $products], 200);
-    }
-
-    // Add a new product
-    public function store(Request $request): JsonResponse
-    {
-        $request->validate([
-            'name' => 'required|string|unique:products,name',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'category' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        $data = $request->only(['name', 'price', 'stock', 'category', 'description']);
-
-        if ($request->hasFile('image')) {
-            $filename = time().'_'.$request->file('image')->getClientOriginalName();
-            $path = $request->file('image')->storeAs('products', $filename, 'public');
-            $data['image'] = $path;
-        }
-
-        $product = Product::create($data);
-
-        return response()->json(['message' => 'Product created successfully', 'data' => $product], 201);
     }
 
     // Get single product
@@ -47,7 +26,52 @@ class ProductController extends Controller
         $product = Product::find($id);
         if (!$product) return response()->json(['error' => 'Product not found'], 404);
 
+        $product->image_url = $product->image ? asset('storage/' . $product->image) : null;
         return response()->json(['data' => $product], 200);
+    }
+
+    // Create product
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|unique:products,name',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'category' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $data = $request->only(['name', 'price', 'stock', 'category', 'description']);
+        $data['barcode'] = 'PRD' . str_pad(Product::max('id') + 1, 4, '0', STR_PAD_LEFT);
+
+        $product = Product::create($data);
+        $product->image_url = null;
+
+        return response()->json(['message' => 'Product created successfully', 'data' => $product], 201);
+    }
+
+    // Upload main image
+    public function uploadImage(Request $request, $id): JsonResponse
+    {
+        $product = Product::find($id);
+        if (!$product) return response()->json(['error' => 'Product not found'], 404);
+
+        $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048']);
+
+        // Delete old image
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
+        }
+
+        $file = $request->file('image');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('products', $filename, 'public');
+
+        $product->image = $path;
+        $product->save();
+        $product->image_url = asset('storage/' . $path);
+
+        return response()->json(['message' => 'Image uploaded successfully', 'data' => $product], 200);
     }
 
     // Update product
@@ -57,28 +81,15 @@ class ProductController extends Controller
         if (!$product) return response()->json(['error' => 'Product not found'], 404);
 
         $request->validate([
-            'name' => 'required|string|unique:products,name,'.$id,
+            'name' => 'required|string|unique:products,name,' . $id,
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $data = $request->only(['name', 'price', 'stock', 'category', 'description']);
-
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($product->image && Storage::disk('public')->exists($product->image)) {
-                Storage::disk('public')->delete($product->image);
-            }
-
-            $filename = time().'_'.$request->file('image')->getClientOriginalName();
-            $path = $request->file('image')->storeAs('products', $filename, 'public');
-            $data['image'] = $path;
-        }
-
-        $product->update($data);
+        $product->update($request->only(['name', 'price', 'stock', 'category', 'description']));
+        $product->image_url = $product->image ? asset('storage/' . $product->image) : null;
 
         return response()->json(['message' => 'Product updated successfully', 'data' => $product], 200);
     }
@@ -94,7 +105,6 @@ class ProductController extends Controller
         }
 
         $product->delete();
-
         return response()->json(['message' => 'Product deleted successfully'], 200);
     }
 }

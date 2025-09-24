@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Carousel } from "react-bootstrap";
 import { FaCheck } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProductDetail({ cart, setCart }) {
   const { productId } = useParams();
@@ -16,6 +17,7 @@ export default function ProductDetail({ cart, setCart }) {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [toastVisible, setToastVisible] = useState(false);
 
+  // ======== Static product data with default images/details/trivia ========
   const productData = {
     "Cordillera Inabel Shawl": {
       images: [
@@ -139,53 +141,77 @@ export default function ProductDetail({ cart, setCart }) {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/products/${productId}`
-        );
-        const prod = res.data.data || res.data;
-        setProduct(prod);
-        setLoading(false);
+        // Fetch single product
+        const res = await axios.get(`http://127.0.0.1:8000/api/products/${productId}`);
+        const prod = res.data.data;
 
+        if (!prod) throw new Error("Product not found");
+
+        // Combine uploaded images with default images
+        const defaultImages = productData[prod.name]?.images || ["/images/placeholder.png"];
+        const uploadedImages = prod.images && prod.images.length > 0
+          ? prod.images.map(img => img.startsWith("http") ? img : `http://127.0.0.1:8000/storage/${img}`)
+          : prod.image
+            ? [`${prod.image_url || `http://127.0.0.1:8000/storage/${prod.image}`}`]
+            : [];
+        const combinedImages = [...uploadedImages, ...defaultImages];
+
+        setProduct({
+          ...prod,
+          images: combinedImages,
+          image_url: combinedImages[0],
+          details: productData[prod.name]?.details || prod.description,
+          trivia: productData[prod.name]?.trivia || "",
+        });
+
+        // Fetch all products for similar products
         const resAll = await axios.get("http://127.0.0.1:8000/api/products");
-        const allProducts = resAll.data.data || resAll.data;
+        const allProducts = resAll.data.data || [];
+
         const similar = allProducts
           .filter((p) => p.category === prod.category && p.id !== prod.id)
+          .map((p) => {
+            const spDefault = productData[p.name]?.images || ["/images/placeholder.png"];
+            const spUploaded = p.images && p.images.length > 0
+              ? p.images.map(img => img.startsWith("http") ? img : `http://127.0.0.1:8000/storage/${img}`)
+              : p.image
+                ? [`${p.image_url || `http://127.0.0.1:8000/storage/${p.image}`}`]
+                : [];
+            const spImages = [...spUploaded, ...spDefault];
+            return { ...p, images: spImages, image_url: spImages[0] };
+          })
           .slice(0, 3);
+
         setSimilarProducts(similar);
+        setLoading(false);
       } catch (err) {
-        console.error("Error fetching product:", err);
+        console.error(err);
         setError("Product not found.");
         setLoading(false);
       }
     };
+
     fetchProduct();
   }, [productId]);
 
   const handleAddToCart = () => {
     if (!product) return;
-
     const exists = cart.find((item) => item.id === product.id);
     const updatedCart = exists
       ? cart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
         )
       : [...cart, { ...product, quantity }];
-
     setCart(updatedCart);
     localStorage.setItem("cart", JSON.stringify(updatedCart));
     localStorage.setItem("cartUpdated", Date.now());
-
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2000);
   };
 
   const handleBuyNow = () => {
     handleAddToCart();
-    navigate("/checkout", {
-      state: { buyNowProduct: { ...product, quantity } }
-    });
+    navigate("/checkout", { state: { buyNowProduct: { ...product, quantity } } });
   };
 
   const handleShare = async () => {
@@ -197,285 +223,133 @@ export default function ProductDetail({ cart, setCart }) {
     }
   };
 
-  if (loading)
-    return (
-      <div style={{ textAlign: "center", marginTop: "120px" }}>
-        Loading product...
-      </div>
-    );
-  if (error)
-    return (
-      <div style={{ textAlign: "center", marginTop: "120px", color: "red" }}>
-        {error}
-      </div>
-    );
-  if (!product)
-    return (
-      <div style={{ textAlign: "center", marginTop: "120px" }}>
-        No product data available.
-      </div>
-    );
+  if (loading) return <div style={{ textAlign: "center", marginTop: "120px" }}>Loading product...</div>;
+  if (error) return <div style={{ textAlign: "center", marginTop: "120px", color: "red" }}>{error}</div>;
+  if (!product) return <div style={{ textAlign: "center", marginTop: "120px" }}>No product data available.</div>;
 
-  const extraData = productData[product.name] || {};
-  const images =
-    extraData.images || (product.imgs?.length ? product.imgs : ["/images/placeholder.png"]);
+  const images = product.images || ["/images/placeholder.png"];
 
   return (
-    <div
-      style={{
-        padding: "120px 20px 40px 20px",
-        maxWidth: "1000px",
-        margin: "0 auto"
-      }}
-    >
-      <h1
-        style={{
-          fontSize: "2.4rem",
-          fontWeight: "bold",
-          marginBottom: "30px",
-          textAlign: "center"
-        }}
-      >
+    <div style={{ padding: "120px 20px 40px 20px", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
+      {/* Toast */}
+      <AnimatePresence>
+        {toastVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            transition={{ duration: 0.4 }}
+            style={{
+              position: "fixed",
+              bottom: "30px",
+              right: "30px",
+              backgroundColor: "#4CAF50",
+              color: "#fff",
+              padding: "15px 20px",
+              borderRadius: "10px",
+              boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              zIndex: 1000,
+            }}
+          >
+            <FaCheck /> Added to cart!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <h1 style={{ fontSize: "2.4rem", fontWeight: "bold", marginBottom: "30px", textAlign: "center" }}>
         {product.name}
       </h1>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "40px",
-          flexWrap: "wrap",
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "30px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.15)"
-        }}
-      >
-        <Carousel
-          style={{
-            flex: 1,
-            minWidth: "350px",
-            borderRadius: "12px",
-            overflow: "hidden"
-          }}
-        >
-          {images.map((src, idx) => (
-            <Carousel.Item key={idx}>
-              <img
-                src={src}
-                alt={`${product.name} ${idx + 1}`}
-                style={{
-                  width: "100%",
-                  height: "450px",
-                  objectFit: "cover",
-                  borderRadius: "12px"
-                }}
-              />
-            </Carousel.Item>
-          ))}
-        </Carousel>
+      <div style={{ display: "flex", flexDirection: "row", gap: "40px", flexWrap: "wrap", backgroundColor: "#fff", borderRadius: "12px", padding: "30px", boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}>
+        {/* Carousel */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} style={{ flex: 1, minWidth: "350px" }}>
+          <Carousel style={{ borderRadius: "12px", overflow: "hidden" }}>
+            {images.map((src, idx) => (
+              <Carousel.Item key={idx}>
+                <motion.img
+                  src={src}
+                  alt={`${product.name} ${idx + 1}`}
+                  style={{ width: "100%", height: "450px", objectFit: "cover", borderRadius: "12px" }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                />
+              </Carousel.Item>
+            ))}
+          </Carousel>
+        </motion.div>
 
-        <div
-          style={{
-            flex: 1,
-            minWidth: "350px",
-            display: "flex",
-            flexDirection: "column"
-          }}
-        >
-          <span
-            style={{
-              backgroundColor: "#ffe6e6",
-              color: "#b71c1c",
-              padding: "5px 12px",
-              borderRadius: "20px",
-              fontWeight: "bold",
-              width: "fit-content",
-              marginBottom: "15px"
-            }}
-          >
+        {/* Right Panel */}
+        <div style={{ flex: 1, minWidth: "350px", display: "flex", flexDirection: "column" }}>
+          <span style={{ backgroundColor: "#ffe6e6", color: "#b71c1c", padding: "5px 12px", borderRadius: "20px", fontWeight: "bold", width: "fit-content", marginBottom: "15px" }}>
             ₱{Number(product.price).toFixed(2)}
           </span>
 
-          <p
-            style={{
-              fontSize: "1rem",
-              color: "#555",
-              lineHeight: "1.8",
-              marginBottom: "25px"
-            }}
-          >
+          <p style={{ fontSize: "1rem", color: "#555", lineHeight: "1.8", marginBottom: "25px" }}>
             {product.description || "No description available."}
           </p>
 
-          {/* Quantity limited to 10 */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "25px"
-            }}
-          >
+          {/* Quantity */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "25px" }}>
             <label style={{ fontWeight: "bold" }}>Quantity:</label>
             <input
               type="number"
               min={1}
               max={10}
               value={quantity}
-              onChange={(e) =>
-                setQuantity(Math.min(10, Math.max(1, Number(e.target.value))))
-              }
-              style={{
-                width: "70px",
-                padding: "6px",
-                borderRadius: "6px",
-                border: "1px solid #ccc"
-              }}
+              onChange={(e) => setQuantity(Math.min(10, Math.max(1, Number(e.target.value))))}
+              style={{ width: "70px", padding: "6px", borderRadius: "6px", border: "1px solid #ccc" }}
             />
           </div>
 
           <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
-            <button
-              onClick={handleAddToCart}
-              style={{
-                flex: 1,
-                padding: "12px",
-                fontWeight: "bold",
-                backgroundColor: "#b71c1c",
-                color: "#fff",
-                borderRadius: "10px",
-                border: "none"
-              }}
-            >
+            <button onClick={handleAddToCart} style={{ flex: 1, padding: "12px", fontWeight: "bold", backgroundColor: "#b71c1c", color: "#fff", borderRadius: "10px", border: "none" }}>
               Add to Cart
             </button>
-            <button
-              onClick={handleBuyNow}
-              style={{
-                flex: 1,
-                padding: "12px",
-                fontWeight: "bold",
-                backgroundColor: "#ff6666",
-                color: "#fff",
-                borderRadius: "10px",
-                border: "none"
-              }}
-            >
+            <button onClick={handleBuyNow} style={{ flex: 1, padding: "12px", fontWeight: "bold", backgroundColor: "#ff6666", color: "#fff", borderRadius: "10px", border: "none" }}>
               Buy Now
             </button>
           </div>
 
-          <button
-            onClick={handleShare}
-            style={{
-              padding: "10px",
-              backgroundColor: "#555",
-              color: "#fff",
-              borderRadius: "8px",
-              border: "none"
-            }}
-          >
+          <button onClick={handleShare} style={{ padding: "10px", backgroundColor: "#555", color: "#fff", borderRadius: "8px", border: "none" }}>
             Share
           </button>
         </div>
       </div>
 
-      {/* About this Product Section */}
-      <div
-        style={{
-          marginTop: "50px",
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "25px",
-          boxShadow: "0 6px 20px rgba(0,0,0,0.1)"
-        }}
-      >
-        <h3
-          style={{
-            fontWeight: "bold",
-            marginBottom: "15px",
-            fontSize: "1.4rem"
-          }}
-        >
-          About this Product
-        </h3>
+      {/* About this Product */}
+      <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.6 }} style={{ marginTop: "50px", backgroundColor: "#fff", borderRadius: "12px", padding: "25px", boxShadow: "0 6px 20px rgba(0,0,0,0.1)" }}>
+        <h3 style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "1.4rem" }}>About this Product</h3>
+        <p><strong>Description:</strong> {product.description || product.details || "No description available."}</p>
+        {product.trivia && <p style={{ marginTop: "10px" }}><strong>Trivia:</strong> {product.trivia}</p>}
+      </motion.div>
 
-        <p
-          style={{
-            fontSize: "1rem",
-            color: "#333",
-            lineHeight: "1.6",
-            marginBottom: "15px"
-          }}
-        >
-          <strong>Description:</strong>{" "}
-          {product.description || "No description available."}
-        </p>
-
-        <p
-          style={{
-            fontSize: "1rem",
-            color: "#333",
-            lineHeight: "1.6",
-            marginBottom: "15px"
-          }}
-        >
-          <strong>Details:</strong>{" "}
-          {extraData.details || "No specific details provided."}
-        </p>
-
-        <p style={{ fontSize: "1rem", color: "#333", lineHeight: "1.6" }}>
-          <strong>Trivia:</strong>{" "}
-          {extraData.trivia || "No trivia available for this product."}
-        </p>
-      </div>
-
-      {/* Similar Products Section */}
+      {/* Similar Products */}
       {similarProducts.length > 0 && (
         <div style={{ marginTop: "40px" }}>
-          <h3 style={{ fontWeight: "bold", marginBottom: "20px" }}>
-            Similar Products
-          </h3>
+          <h3 style={{ fontWeight: "bold", marginBottom: "20px" }}>Similar Products</h3>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-            {similarProducts.map((sp) => (
-              <div
+            {similarProducts.map((sp, index) => (
+              <motion.div
                 key={sp.id}
                 onClick={() => navigate(`/product/${sp.id}`)}
-                style={{
-                  cursor: "pointer",
-                  width: "200px",
-                  border: "1px solid #ddd",
-                  borderRadius: "10px",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                  textAlign: "center",
-                  padding: "10px"
-                }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2, duration: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+                style={{ cursor: "pointer", width: "200px", border: "1px solid #ddd", borderRadius: "10px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", textAlign: "center", padding: "10px" }}
               >
                 <img
-                  src={
-                    (productData[sp.name]?.images?.[0]) ||
-                    sp.imgs?.[0] ||
-                    "/images/placeholder.png"
-                  }
+                  src={(sp.images && sp.images[0]) || "/images/placeholder.png"}
                   alt={sp.name}
-                  style={{
-                    width: "100%",
-                    height: "150px",
-                    objectFit: "cover",
-                    borderRadius: "6px"
-                  }}
+                  style={{ width: "100%", height: "150px", objectFit: "cover", borderRadius: "6px" }}
                 />
-                <p style={{ fontWeight: "bold", margin: "10px 0 5px 0" }}>
-                  {sp.name}
-                </p>
-                <span
-                  style={{ color: "#b71c1c", fontWeight: "bold" }}
-                >
-                  ₱{Number(sp.price).toFixed(2)}
-                </span>
-              </div>
+                <p style={{ fontWeight: "bold", margin: "10px 0 5px 0" }}>{sp.name}</p>
+                <span style={{ color: "#b71c1c", fontWeight: "bold" }}>₱{Number(sp.price).toFixed(2)}</span>
+              </motion.div>
             ))}
           </div>
         </div>

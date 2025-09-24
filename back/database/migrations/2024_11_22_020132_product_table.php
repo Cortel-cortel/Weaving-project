@@ -8,29 +8,26 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up() {
+    public function up(): void
+    {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('barcode')->unique();
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
-            $table->integer('stock');
+            $table->integer('stock')->default(0);
             $table->string('category')->nullable();
+            $table->string('image')->nullable(); // For product image
             $table->timestamps();
         });
     }
-    
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('products');
     }

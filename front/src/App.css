@@ -10,7 +10,7 @@ main {
   overflow: visible; /* sticky won't work if overflow is hidden on parent */
 }
 
-/* -------------------- Forms (Login/Register) -------------------- */
+/* -------------------- Forms (Login/Register & ProductForm) -------------------- */
 form {
   background: white;
   padding: 30px;
@@ -18,30 +18,63 @@ form {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  width: 350px;
+ 
 }
 
-input {
+input, textarea {
   padding: 12px;
   margin-bottom: 15px;
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: 14px;
   outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-input:focus {
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+input:focus, textarea:focus {
   border-color: #b71c1c;
   box-shadow: 0 0 5px rgba(183, 28, 28, 0.5);
   outline: none;
 }
 
-button:hover {
-  background-color: #7f0000;
+button {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #f4f4f4;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-h1, h2, h3, h4, h5 {
-  color: #333;
+button:hover {
+  background-color: #7f0000;
+  color: white;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* -------------------- ProductForm Specific -------------------- */
+.productform-preview {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.productform-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 /* -------------------- Main Page (Products & Filters) -------------------- */
@@ -91,8 +124,8 @@ h1, h2, h3, h4, h5 {
 }
 
 .product-card {
-  width: 300px;       /* Fixed width for all cards */
-  height: 450px;      /* Fixed height to keep uniform size */
+  width: 300px;
+  height: 450px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

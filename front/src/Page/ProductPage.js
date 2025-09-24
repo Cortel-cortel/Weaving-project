@@ -1,3 +1,4 @@
+// src/Page/ProductPage.js
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -23,28 +24,39 @@ export default function ProductPage() {
 
   const videoIDs = ["VIDEO_ID_1", "VIDEO_ID_2", "VIDEO_ID_3", "VIDEO_ID_4", "VIDEO_ID_5", "VIDEO_ID_6"];
 
-    const productImages = {
-      "Cordillera Inabel Shawl": "/images/products/inabel-shawl.jpg",
-      "Cordillera Inabel Blanket": "/images/products/inabel-blanket.jpg",
-      "Cordillera Inabel Cushion Cover": "/images/products/inabel-cushion_cover.jpg",
-      "Ikat Table Runner": "/images/products/ikat-table_runner.jpg",
-      "Ikat Wall Hanging": "/images/products/ikat-wall_hanging.jpg",
-      "Ikat Tote Bag": "/images/products/ikat-tote_bag.jpg",
-      "Kalinga Weaving Bag": "/images/products/kalinga-bag.jpg",
-      "Kalinga Weaving Table Mat": "/images/products/kalinga-table_mat.jpg",
-      "Kalinga Weaving Wall Decor": "/images/products/kalinga-wall_decor.jpg",
-    };
+  const productImages = {
+    "Cordillera Inabel Shawl": "/images/products/inabel-shawl.jpg",
+    "Cordillera Inabel Blanket": "/images/products/inabel-blanket.jpg",
+    "Cordillera Inabel Cushion Cover": "/images/products/inabel-cushion_cover.jpg",
+    "Ikat Table Runner": "/images/products/ikat-table_runner.jpg",
+    "Ikat Wall Hanging": "/images/products/ikat-wall_hanging.jpg",
+    "Ikat Tote Bag": "/images/products/ikat-tote_bag.jpg",
+    "Kalinga Weaving Bag": "/images/products/kalinga-bag.jpg",
+    "Kalinga Weaving Table Mat": "/images/products/kalinga-table_mat.jpg",
+    "Kalinga Weaving Wall Decor": "/images/products/kalinga-wall_decor.jpg",
+  };
 
+  // Fetch products from API
   useEffect(() => {
     axios.get("http://localhost:8000/api/products")
       .then(res => {
         const items = res.data.data || res.data;
-        setProducts(items);
-        setCategories([...new Set(items.map(p => p.category))]);
+
+        // Map products to include image_url (uploaded or fallback)
+        const mappedProducts = items.map(p => ({
+          ...p,
+          image_url: p.image 
+            ? p.image_url || `http://127.0.0.1:8000/storage/${p.image}` 
+            : productImages[p.name] || "/images/placeholder.png"
+        }));
+
+        setProducts(mappedProducts);
+        setCategories([...new Set(mappedProducts.map(p => p.category))]);
       })
       .catch(err => console.error("Error fetching products:", err));
   }, []);
 
+  // Scroll to top button visibility
   useEffect(() => {
     const handleScroll = () => setShowScroll(window.scrollY > 300);
     window.addEventListener("scroll", handleScroll);
@@ -90,9 +102,7 @@ export default function ProductPage() {
 
   // Filter products based on category, search, and price
   const filteredProducts = products
-    // Only show products matching the current weaving type
     .filter(p => normalizedId ? p.category?.toLowerCase().includes(normalizedId) : true)
-    // Filter by selected categories (checkbox)
     .filter(p => selectedCategories.length > 0
       ? selectedCategories.some(cat => p.category?.toLowerCase().includes(cat.toLowerCase()))
       : true)
@@ -114,8 +124,8 @@ export default function ProductPage() {
       <div className="intro-section d-flex align-items-start p-4">
         <div className="intro-images me-4" style={{ flex: 1 }} ref={carouselRef}>
           <Carousel controls indicators
-            nextIcon={<span className="carousel-control-next-icon" style={{ backgroundColor: "#b71c1c", borderRadius: "50%" }}/>}
-            prevIcon={<span className="carousel-control-prev-icon" style={{ backgroundColor: "#b71c1c", borderRadius: "50%" }}/>}
+            nextIcon={<span className="carousel-control-next-icon" style={{ backgroundColor: "#b71c1c", borderRadius: "50%" }}/> }
+            prevIcon={<span className="carousel-control-prev-icon" style={{ backgroundColor: "#b71c1c", borderRadius: "50%" }}/> }
           >
             {intro.images.map((src, idx) => (
               <Carousel.Item key={idx}>
@@ -187,7 +197,7 @@ export default function ProductPage() {
               onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)"; }}
               onClick={() => navigate(`/product/${p.id}`)}
             >
-              <img src={productImages[p.name] || "/images/placeholder.png"} alt={p.name} style={styles.productImage} />
+              <img src={p.image_url} alt={p.name} style={styles.productImage} />
               <h5>{p.name}</h5>
               <p>₱{Number(p.price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               <p style={{ fontSize: "0.9rem", color: "#555", marginTop: "8px" }}>

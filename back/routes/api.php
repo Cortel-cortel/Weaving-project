@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AuthController;
@@ -10,13 +9,13 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\OrderController;
 
-// =======================
-// Public Routes
-// =======================
-
-// Product listing
+// Public Product Routes
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::post('/products', [ProductController::class, 'store']);
+Route::put('/products/{id}', [ProductController::class, 'update']);
+Route::post('/products/{id}/image', [ProductController::class, 'uploadImage']);
+Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 // Donations
 Route::post('/donations', [DonationController::class, 'store']);
@@ -28,18 +27,12 @@ Route::delete('/donations/{id}', [DonationController::class, 'destroy']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// =======================
-// Public access to order updates/deletes
-// =======================
+// Orders public updates/deletes
 Route::put('/orders/{id}', [OrderController::class, 'update']); 
 Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
 
-// =======================
-// Protected Routes (Authenticated Users)
-// =======================
+// Protected Routes
 Route::middleware(['auth:sanctum'])->group(function () {
-
-    // User info
     Route::get('/user', function (Request $request) {
         return response()->json([
             'success' => true,
@@ -58,25 +51,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Checkout
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
-    // Orders accessible by any authenticated user
+    // Orders
     Route::get('/orders', [OrderController::class, 'index']);      
     Route::get('/orders/{id}', [OrderController::class, 'show']);
-
-    // =======================
-    // Admin-only routes
-    // =======================
-    Route::middleware('admin')->group(function () {
-
-        Route::get('/dashboard', function () {
-            return response()->json([
-                'success' => true,
-                'message' => 'Welcome Admin',
-            ]);
-        });
-
-        // Product management
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::put('/products/{id}', [ProductController::class, 'update']);
-        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-    });
 });
