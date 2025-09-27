@@ -40,7 +40,6 @@ export default function ManageDonations({ handleLogout }) {
 
   useEffect(() => {
     fetchDonations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Open delete modal
@@ -52,7 +51,7 @@ export default function ManageDonations({ handleLogout }) {
   // Confirm delete
   const confirmDelete = async () => {
     try {
-      await api.delete(`/donations/${selectedId}`); // ✅ no headers
+      await api.delete(`/donations/${selectedId}`); 
       await fetchDonations();
     } catch (err) {
       console.error(err);
@@ -76,7 +75,6 @@ export default function ManageDonations({ handleLogout }) {
 
   return (
     <>
-      {/* Navbar */}
       <nav
         style={{
           display: "flex",

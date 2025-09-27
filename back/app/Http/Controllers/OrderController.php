@@ -71,7 +71,7 @@ class OrderController extends Controller
         ]);
     }
 
-    // Update order status (public-safe)
+    // Update order status 
     public function update(Request $request, $id)
     {
         $order = Order::find($id);
@@ -101,7 +101,7 @@ class OrderController extends Controller
         ], 400);
     }
 
-    // Delete an order (public-safe)
+    // Delete an order 
     public function destroy($id)
     {
         $order = Order::find($id);

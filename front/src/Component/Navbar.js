@@ -35,7 +35,6 @@ export default function Navbar({ onLogout, role }) {
     }
   }, [role]);
 
-  // Logout function
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -47,7 +46,6 @@ export default function Navbar({ onLogout, role }) {
     navigate("/login", { replace: true });
   };
 
-  // Show navbar only for users
   if (role !== "user") return null;
 
   return (
@@ -69,7 +67,6 @@ export default function Navbar({ onLogout, role }) {
         boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
       }}
     >
-      {/* Left: Back button */}
       <div>
         {showBackButton && (
           <button
@@ -97,9 +94,7 @@ export default function Navbar({ onLogout, role }) {
         )}
       </div>
 
-      {/* Right: Cart + Logout */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        {/* Cart button */}
         <button
           onClick={() => navigate("/cart")}
           style={{
@@ -136,7 +131,6 @@ export default function Navbar({ onLogout, role }) {
           )}
         </button>
 
-        {/* Logout button */}
         <button
           onClick={handleLogout}
           style={{

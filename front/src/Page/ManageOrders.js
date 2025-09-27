@@ -1,11 +1,10 @@
-// src/Page/ManageOrders.js
 import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Alert, Spinner, Badge } from "react-bootstrap";
 import { RiDeleteBin5Fill } from "react-icons/ri";
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import DeletePrompt from "../Component/DeletePrompt";
-import api from "./api"; // centralized axios instance
+import api from "./api"; 
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function ManageOrders({ handleLogout }) {
@@ -26,7 +25,6 @@ export default function ManageOrders({ handleLogout }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // ✅ Redirect if no token
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -138,7 +136,6 @@ export default function ManageOrders({ handleLogout }) {
 
   return (
     <>
-      {/* Navbar */}
       <nav
         style={{
           display: "flex",
@@ -167,7 +164,6 @@ export default function ManageOrders({ handleLogout }) {
 
         {error && <Alert variant="danger">{error}</Alert>}
 
-        {/* Search & Filter */}
         <div className="d-flex gap-2 mb-3">
           <Form.Control
             type="text"

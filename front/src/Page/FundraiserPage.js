@@ -1,4 +1,3 @@
-// src/Page/FundraiserPage.js
 import React, { useRef } from "react"; 
 import { Carousel, Button, Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +17,6 @@ export default function FundraiserPage() {
 
   return (
     <div style={{ paddingTop: "80px" }}>
-      {/* Banner Carousel */}
       <Carousel interval={3000} controls indicators>
         <Carousel.Item>
           <img src="/images/fundraiser-banner1.jpg" className="d-block w-100" alt="Banner 1" style={{ maxHeight: "500px", objectFit: "cover" }} />
@@ -31,7 +29,6 @@ export default function FundraiserPage() {
         </Carousel.Item>
       </Carousel>
 
-      {/* Buttons */}
       <div style={{ display: "flex", justifyContent: "center", gap: "20px", margin: "30px 0" }}>
         <Button
           style={{ backgroundColor: "#b71c1c", borderColor: "#b71c1c", fontWeight: "bold", padding: "10px 25px", borderRadius: "8px" }}
@@ -52,7 +49,6 @@ export default function FundraiserPage() {
         </Button>
       </div>
 
-      {/* Description Section */}
       <div ref={descriptionRef} style={{ padding: "50px 20px", textAlign: "center", backgroundColor: "#f9f9f9" }}>
         <h2 style={{ fontWeight: "bold", marginBottom: "20px" }}>Support Our Fundraisers</h2>
         <p style={{ fontSize: "1.1rem", color: "#555", lineHeight: "1.6", maxWidth: "800px", margin: "0 auto" }}>
@@ -61,7 +57,6 @@ export default function FundraiserPage() {
         </p>
       </div>
 
-      {/* 6-Card Carousel */}
       <Carousel interval={3000} controls indicators={false}>
         {fundraiserData.reduce((acc, _, index, array) => {
           if (index % 3 === 0) acc.push(array.slice(index, index + 3));
@@ -90,7 +85,6 @@ export default function FundraiserPage() {
         ))}
       </Carousel>
 
-      {/* Extra Description */}
       <div style={{ padding: "40px 20px", textAlign: "center", backgroundColor: "#fff" }}>
         <h3 style={{ fontWeight: "bold", marginBottom: "15px" }}>Why Your Support Matters</h3>
         <p style={{ fontSize: "1rem", color: "#555", lineHeight: "1.6", maxWidth: "850px", margin: "0 auto" }}>
@@ -99,7 +93,6 @@ export default function FundraiserPage() {
         </p>
       </div>
 
-      {/* Footer */}
       <footer style={{ backgroundColor: "#333", color: "#fff", padding: "30px 20px", marginTop: "40px", textAlign: "center" }}>
         <p style={{ margin: "0", fontSize: "0.95rem" }}>
           © {new Date().getFullYear()} Cordillera Fundraisers. All Rights Reserved.

@@ -10,12 +10,26 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
-        'category',
-        'price',
-        'stock',
-        'image',
-        'barcode',
+    'name',
+    'description',
+    'details',   
+    'trivia',   
+    'category',
+    'price',
+    'stock',
+    'images',
+    'barcode',
+];
+
+
+    protected $casts = [
+        'images' => 'array',
     ];
+
+    // Only return non-empty images, null if none
+    public function getValidImagesAttribute()
+    {
+        $filtered = is_array($this->images) ? array_filter($this->images) : [];
+        return !empty($filtered) ? $filtered : null;
+    }
 }

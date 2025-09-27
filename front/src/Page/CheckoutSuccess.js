@@ -1,4 +1,3 @@
-// src/Page/CheckoutSuccess.js
 import React from 'react';
 import { Button, Alert, Container, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -7,14 +6,13 @@ export default function CheckoutSuccess() {
   const navigate = useNavigate();
 
   const handleBackToHome = () => {
-    navigate('/home'); // Always go to home
+    navigate('/home'); 
   };
 
   return (
-    <Container style={{ paddingTop: '120px' }}> {/* Add top padding for sticky navbar */}
+    <Container style={{ paddingTop: '120px' }}> 
       <Row className="justify-content-center">
         <Col md={8} lg={6}>
-          {/* Back to Home button on top */}
           <div className="mb-4 text-center">
             <Button 
               variant="danger" 

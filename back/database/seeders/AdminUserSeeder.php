@@ -16,7 +16,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('admin123'),
-                'role' => 'admin', // matches your table column
+                'role' => 'admin', 
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

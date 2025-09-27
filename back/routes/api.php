@@ -14,7 +14,7 @@ Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::post('/products', [ProductController::class, 'store']);
 Route::put('/products/{id}', [ProductController::class, 'update']);
-Route::post('/products/{id}/image', [ProductController::class, 'uploadImage']);
+Route::post('/products/{id}/images', [ProductController::class, 'uploadImage']);
 Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 // Donations

@@ -1,11 +1,9 @@
-// src/Page/api.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api", // Laravel backend
+  baseURL: "http://127.0.0.1:8000/api", 
 });
 
-// Add token automatically if it exists
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");

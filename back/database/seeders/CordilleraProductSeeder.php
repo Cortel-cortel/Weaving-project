@@ -9,7 +9,6 @@ class CordilleraProductSeeder extends Seeder
 {
     public function run()
     {
-        // Clear the table first (disable foreign key check to avoid errors)
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('products')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
@@ -22,6 +21,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 120,
                 'stock' => 10,
                 'barcode' => 'CI001',
+                'images' => null, 
             ],
             [
                 'name' => 'Ikat Table Runner',
@@ -30,6 +30,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 150,
                 'stock' => 15,
                 'barcode' => 'IK001',
+                'images' => null,
             ],
             [
                 'name' => 'Kalinga Weaving Bag',
@@ -38,6 +39,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 250,
                 'stock' => 12,
                 'barcode' => 'KL001',
+                'images' => null,
             ],
             [
                 'name' => 'Cordillera Inabel Blanket',
@@ -46,6 +48,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 800,
                 'stock' => 8,
                 'barcode' => 'CI002',
+                'images' => null,
             ],
             [
                 'name' => 'Ikat Wall Hanging',
@@ -54,6 +57,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 500,
                 'stock' => 5,
                 'barcode' => 'IK002',
+                'images' => null,
             ],
             [
                 'name' => 'Kalinga Weaving Table Mat',
@@ -62,6 +66,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 200,
                 'stock' => 20,
                 'barcode' => 'KL002',
+                'images' => null,
             ],
             [
                 'name' => 'Cordillera Inabel Cushion Cover',
@@ -70,6 +75,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 120,
                 'stock' => 25,
                 'barcode' => 'CI003',
+                'images' => null,
             ],
             [
                 'name' => 'Ikat Tote Bag',
@@ -78,6 +84,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 110,
                 'stock' => 14,
                 'barcode' => 'IK003',
+                'images' => null,
             ],
             [
                 'name' => 'Kalinga Weaving Wall Decor',
@@ -86,6 +93,7 @@ class CordilleraProductSeeder extends Seeder
                 'price' => 300,
                 'stock' => 6,
                 'barcode' => 'KL003',
+                'images' => null,
             ],
         ];
 

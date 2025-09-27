@@ -3,7 +3,7 @@ import axios from "axios";
 
 export default function ProductForm() {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
   const [details, setDetails] = useState("");
   const [trivia, setTrivia] = useState("");
   const [category, setCategory] = useState("");
@@ -23,8 +23,14 @@ export default function ProductForm() {
 
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
-    setPreviews(files.map((file) => URL.createObjectURL(file)));
+    setImages((prev) => [...prev, ...files]);
+    setPreviews((prev) => [...prev, ...files.map((file) => URL.createObjectURL(file))]);
+  };
+
+  // ✅ Remove image from preview and state
+  const handleRemoveImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -44,7 +50,15 @@ export default function ProductForm() {
 
       const response = await axios.post(
         "http://127.0.0.1:8000/api/products",
-        { name, description, details, trivia, category, price, stock },
+        {
+          name,
+          description: shortDescription,
+          details,
+          trivia,
+          category,
+          price,
+          stock,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -69,7 +83,7 @@ export default function ProductForm() {
 
       setSuccess("✅ Product added successfully!");
       setName("");
-      setDescription("");
+      setShortDescription("");
       setDetails("");
       setTrivia("");
       setCategory("");
@@ -95,14 +109,26 @@ export default function ProductForm() {
         <label>Product Name</label>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
 
-        <label>Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+        <label>Short Description</label>
+        <textarea
+          value={shortDescription}
+          onChange={(e) => setShortDescription(e.target.value)}
+          placeholder="A short overview of the product..."
+        />
 
         <label>Details</label>
-        <textarea value={details} onChange={(e) => setDetails(e.target.value)} />
+        <textarea
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          placeholder="Specifics like material, size, usage..."
+        />
 
         <label>Trivia</label>
-        <textarea value={trivia} onChange={(e) => setTrivia(e.target.value)} />
+        <textarea
+          value={trivia}
+          onChange={(e) => setTrivia(e.target.value)}
+          placeholder="Cultural background or interesting facts..."
+        />
 
         <label>Category</label>
         <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} />
@@ -113,7 +139,6 @@ export default function ProductForm() {
         <label>Stock</label>
         <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} required />
 
-        {/* Hidden file input */}
         <input
           type="file"
           accept="image/*"
@@ -123,32 +148,43 @@ export default function ProductForm() {
           style={{ display: "none" }}
         />
 
-        {/* Visible button to trigger image input */}
-        <button
-          type="button"
-          onClick={triggerFileInput}
-          style={{
-            padding: "10px",
-            marginTop: "10px",
-            marginBottom: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            backgroundColor: "#f4f4f4",
-            cursor: "pointer",
-          }}
-        >
+        <button type="button" onClick={triggerFileInput}>
           Add Images
         </button>
 
-        {/* Preview selected images */}
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "15px" }}>
+        {/* ✅ Preview selected images with delete button */}
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "15px" }}>
           {previews.map((src, idx) => (
-            <img
-              key={idx}
-              src={src}
-              alt={`preview ${idx + 1}`}
-              style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "8px" }}
-            />
+            <div key={idx} style={{ position: "relative" }}>
+              <img
+                src={src}
+                alt={`preview ${idx + 1}`}
+                style={{
+                  width: "120px",
+                  height: "120px",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => handleRemoveImage(idx)}
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  right: "5px",
+                  background: "red",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "24px",
+                  height: "24px",
+                  cursor: "pointer",
+                }}
+              >
+                ✕
+              </button>
+            </div>
           ))}
         </div>
 

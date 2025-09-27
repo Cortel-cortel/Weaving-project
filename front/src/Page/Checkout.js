@@ -1,4 +1,3 @@
-// src/Page/Checkout.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -90,7 +89,6 @@ export default function Checkout({ cart, setCart }) {
 
       {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
 
-      {/* Cart Summary */}
       <div style={{ marginBottom: "20px", border: "1px solid #ccc", borderRadius: "8px", padding: "10px" }}>
         <h3 style={{ marginBottom: "10px" }}>Order Summary</h3>
         {cart.map((item, idx) => (
@@ -106,7 +104,6 @@ export default function Checkout({ cart, setCart }) {
         </div>
       </div>
 
-      {/* Checkout Form */}
       <form onSubmit={handleConfirmOrder} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
         <input type="text" placeholder="Full Name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={inputStyle} required />
         <input type="email" placeholder="Email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} style={inputStyle} required />

@@ -7,7 +7,7 @@ body, html {
   padding: 0;
 }
 main {
-  overflow: visible; /* sticky won't work if overflow is hidden on parent */
+  overflow: visible; 
 }
 
 /* -------------------- Forms (Login/Register & ProductForm) -------------------- */
@@ -79,7 +79,7 @@ label {
 
 /* -------------------- Main Page (Products & Filters) -------------------- */
 .main-content {
-  padding-top: 70px; /* space for fixed navbar */
+  padding-top: 70px; 
 }
 .main-wrapper {
   display: flex;
@@ -228,7 +228,6 @@ label {
   background-color: #ac2725;
 }
 
-/* Only push content down on pages with navbar */
 .with-navbar .page-content {
   padding-top: 70px; 
 }
@@ -495,7 +494,6 @@ label {
   .arrow-btn { font-size: 2rem; }
 }
 
-/* Page font fallback */
 .home-page {
   font-family: Arial, sans-serif;
 }

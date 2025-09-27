@@ -30,14 +30,12 @@ function Register({ onLogin }) {
         name,
         email,
         password,
-        password_confirmation: confirmPassword, // match backend
+        password_confirmation: confirmPassword, 
       });
 
       if (response.data.success) {
-        // Save user data in context/state
         onLogin(response.data);
 
-        // Redirect based on backend response
         navigate(response.data.redirect || "/home");
       } else {
         alert(response.data.message || "Registration failed");

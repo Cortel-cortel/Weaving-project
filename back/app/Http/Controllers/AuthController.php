@@ -37,7 +37,7 @@ class AuthController extends Controller
             'user'     => $user,
             'isAdmin'  => $user->role === 'admin',
             'token'    => $token,
-            'redirect' => '/home', // frontend uses this
+            'redirect' => '/home', 
         ], 201);
     }
 

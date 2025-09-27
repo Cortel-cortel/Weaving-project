@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
 
+//Category
 const products = [
   { id: "ikat1", name: "Ikat", img: "/images/ikat.jpg" },
   { id: "inabel1", name: "Inabel", img: "/images/inabel.jpg" },
@@ -15,7 +16,8 @@ const Home = () => {
   const [hoverArrow, setHoverArrow] = useState("");
   const [hoverView, setHoverView] = useState(null);
 
-  const handlePrev = () => setStartIndex((prev) => (prev - 1 + products.length) % products.length);
+  const handlePrev = () =>
+    setStartIndex((prev) => (prev - 1 + products.length) % products.length);
   const handleNext = () => setStartIndex((prev) => (prev + 1) % products.length);
 
   const handleView = (product) => {
@@ -35,7 +37,10 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      <div className="hero-section" style={{ height: "50vh", position: "relative" }}>
+      <div
+        className="hero-section"
+        style={{ height: "50vh", position: "relative", marginTop: "55px" }}
+      >
         <img
           src="/images/hero-banner.jpg"
           alt="Hero Banner"
@@ -50,12 +55,14 @@ const Home = () => {
             left: "50%",
             transform: "translate(-50%, -50%)",
             color: "white",
-            fontSize: "3rem",
-            textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
+            fontSize: "8rem",
+            fontWeight: "1000",
+            textShadow: "4px 4px 14px rgba(0,0,0,0.9)",
             textAlign: "center",
+            letterSpacing: "4px",
           }}
         >
-          <h1>Welcome to Threaditional</h1>
+          <h1 style={{ margin: 0 }}>Welcome to Threaditional</h1>
         </div>
       </div>
 
@@ -68,7 +75,7 @@ const Home = () => {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          padding: "40px 0",
+          padding: "60px 0",
         }}
       >
         <button
@@ -78,8 +85,8 @@ const Home = () => {
           onMouseLeave={() => setHoverArrow("")}
           style={{
             position: "absolute",
-            left: "10px",
-            fontSize: "2rem",
+            left: "7%",
+            fontSize: "2.8rem",
             background: "transparent",
             border: "none",
             cursor: "pointer",
@@ -93,57 +100,63 @@ const Home = () => {
           className="carousel"
           style={{
             display: "flex",
-            gap: "20px",
+            gap: "45px",
             justifyContent: "center",
             alignItems: "center",
             flexWrap: "nowrap",
-            width: "80%",
+            width: "85%",
           }}
         >
           {visibleProducts.map((product) => (
             <div
-              key={product.id}
-              className="card"
-              style={{
-                flex: "0 0 auto",
-                borderRadius: "12px",
-                overflow: "hidden",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                textAlign: "center",
-                backgroundColor: "#fff",
-                transition: "transform 0.3s, box-shadow 0.3s",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.05)";
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
-              }}
-            >
+                key={product.id}
+                className="card"
+                style={{
+                  flex: "0 0 auto",
+                  width: "320px",
+                  borderRadius: "18px",
+                  overflow: "hidden",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  textAlign: "center",
+                  backgroundColor: "#fff",
+                  transition: "all 0.35s ease",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.03)";
+                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+                }}
+              >
+
               <img
                 src={product.img}
                 alt={product.name}
-                style={{ width: "100%", height: "200px", objectFit: "cover" }}
+                style={{ width: "100%", height: "300px", objectFit: "cover" }}
               />
-              <h3 style={{ margin: "10px 0" }}>{product.name}</h3>
+              <h3 style={{ margin: "18px 0", fontSize: "1.6rem" }}>
+                {product.name}
+              </h3>
               <button
                 className="view-btn"
                 onClick={() => handleView(product)}
                 onMouseEnter={() => setHoverView(product.id)}
                 onMouseLeave={() => setHoverView(null)}
                 style={{
-                  backgroundColor: hoverView === product.id ? "#ff9999" : "#b71c1c",
+                  backgroundColor:
+                    hoverView === product.id ? "#ff9999" : "#b71c1c",
                   color: "#fff",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
-                  marginBottom: "10px",
+                  borderRadius: "10px",
+                  padding: "14px 22px",
+                  marginBottom: "18px",
                   cursor: "pointer",
                   fontWeight: "bold",
-                  transition: "background-color 0.3s",
+                  fontSize: "1.1rem",
+                  transition: "all 0.3s ease",
                 }}
               >
                 View
@@ -159,8 +172,8 @@ const Home = () => {
           onMouseLeave={() => setHoverArrow("")}
           style={{
             position: "absolute",
-            right: "10px",
-            fontSize: "2rem",
+            right: "7%",
+            fontSize: "2.8rem",
             background: "transparent",
             border: "none",
             cursor: "pointer",

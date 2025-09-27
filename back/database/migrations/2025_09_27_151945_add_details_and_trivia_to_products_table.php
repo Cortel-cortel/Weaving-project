@@ -6,23 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            // Rename 'images' to 'image'
-            if (Schema::hasColumn('products', 'images')) {
-                $table->renameColumn('images', 'image');
-            }
+            $table->text('details')->nullable()->after('description');
+            $table->text('trivia')->nullable()->after('details');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            // Rollback: rename 'image' back to 'images'
-            if (Schema::hasColumn('products', 'image')) {
-                $table->renameColumn('image', 'images');
-            }
+            $table->dropColumn(['details', 'trivia']);
         });
     }
 };

@@ -107,17 +107,12 @@ The initiative fosters intergenerational knowledge transfer, ensuring that tradi
 ];
 
 export default function FundraiserDetail() {
-  // ✅ Get the fundraiser ID from the URL
   const { fundraiserId } = useParams();
 
-  // ✅ Find the fundraiser from the list
   const fundraiser = fundraiserList.find(
     (f) => f.id === parseInt(fundraiserId)
   );
 
-  // ----------------------
-  // Donation State & Handlers
-  // ----------------------
   const [showDonate, setShowDonate] = useState(false);
   const [thankYouVisible, setThankYouVisible] = useState(false);
   const [donorData, setDonorData] = useState({
@@ -136,7 +131,6 @@ export default function FundraiserDetail() {
     );
   }
 
-// Handle input changes
 const handleInputChange = (e) => {
   const { name, value } = e.target;
   setDonorData((prev) => ({ ...prev, [name]: value }));
@@ -221,7 +215,6 @@ const handleDonateSubmit = async (e) => {
         {fundraiser.name}
       </h1>
 
-      {/* Image Carousel */}
       <Carousel fade>
         {fundraiser.images.map((img, idx) => (
           <Carousel.Item key={idx}>
@@ -259,7 +252,6 @@ const handleDonateSubmit = async (e) => {
         </Button>
       </div>
 
-      {/* Donation Modal */}
       <Modal
         show={showDonate}
         onHide={() => {

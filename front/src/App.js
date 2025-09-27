@@ -34,7 +34,6 @@ function AppRoutes({ role, handleLogin, handleLogout, cart, setCart }) {
 
   return (
     <>
-      {/* Show Navbar only for users */}
       {role === "user" && !hideNavbar && <Navbar onLogout={handleLogout} role={role} />}
       
       <div className={role === "user" ? "with-navbar page-content" : ""}>
@@ -85,12 +84,11 @@ function App() {
     return storedCart ? JSON.parse(storedCart) : [];
   });
 
-  // Sync cart with localStorage
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  // Login handler
+  // Login 
   const handleLogin = (userData) => {
     const newRole = userData.isAdmin ? "admin" : "user";
     setRole(newRole);
@@ -99,7 +97,7 @@ function App() {
     localStorage.setItem("isAdmin", userData.isAdmin);
   };
 
-  // Logout handler
+  // Logout 
   const handleLogout = () => {
     setRole(null);
     setCart([]);

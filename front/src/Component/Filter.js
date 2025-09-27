@@ -61,7 +61,6 @@ export default function Filter({
 
       <hr />
 
-      {/* Categories */}
       <div className="filter-item mt-4">
         <h5>Categories</h5>
         <div className="category-list">

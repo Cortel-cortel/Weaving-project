@@ -1,67 +1,98 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef } from "react";
 import axios from "axios";
-import "../App.css";
 
-export default function AddProduct() {
-  const navigate = useNavigate();
-
-  // Form state
+export default function ProductForm() {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [details, setDetails] = useState("");
+  const [trivia, setTrivia] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [images, setImages] = useState([]); // Selected images
-  const [previewImages, setPreviewImages] = useState([]); // Preview thumbnails
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Handle image selection
-  const handleImagesChange = (e) => {
-    const files = Array.from(e.target.files);
-    setImages(files);
+  const imageInputRef = useRef();
 
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreviewImages(previews);
+  const triggerFileInput = () => {
+    imageInputRef.current.click();
   };
 
-  // Handle form submission
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImages((prev) => [...prev, ...files]);
+    setPreviews((prev) => [...prev, ...files.map((file) => URL.createObjectURL(file))]);
+  };
+
+  const handleRemoveImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
 
-    // Validate required fields
-    if (!name || !description || !category || !price || !stock) {
-      setError("Please fill in all fields.");
+    if (!name || !price || !stock) {
+      setError("Please fill in all required fields.");
       setLoading(false);
       return;
     }
 
-    // Prepare FormData for file upload
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("category", category);
-    formData.append("price", price);
-    formData.append("stock", stock);
-    images.forEach((img) => formData.append("images[]", img));
-
     try {
       const token = localStorage.getItem("userToken");
-      await axios.post("http://127.0.0.1:8000/api/products", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
-      alert("Product added successfully!");
-      navigate("/dashboard");
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/products",
+        {
+          name,
+          description: shortDescription,
+          details,
+          trivia,
+          category,
+          price,
+          stock,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const productId = response.data.data.id;
+
+      if (images.length > 0) {
+        for (const img of images) {
+          const formData = new FormData();
+          formData.append("image", img);
+          await axios.post(
+            `http://127.0.0.1:8000/api/products/${productId}/image`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        }
+      }
+
+      setSuccess("✅ Product added successfully!");
+      setName("");
+      setShortDescription("");
+      setDetails("");
+      setTrivia("");
+      setCategory("");
+      setPrice("");
+      setStock("");
+      setImages([]);
+      setPreviews([]);
     } catch (err) {
-      console.error(err);
-      setError("Failed to add product. Please try again.");
+      console.error(err.response);
+      setError(err.response?.data?.message || "❌ Failed to save product.");
     } finally {
       setLoading(false);
     }
@@ -70,71 +101,90 @@ export default function AddProduct() {
   return (
     <div className="form-wrapper">
       <h2>Add New Product</h2>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {success && <p style={{ color: "green" }}>{success}</p>}
+
       <form onSubmit={handleSubmit}>
-        {error && <p className="error-text">{error}</p>}
+        <label>Product Name</label>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
 
-        <input
-          type="text"
-          placeholder="Product Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
+        <label>Short Description</label>
         <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={shortDescription}
+          onChange={(e) => setShortDescription(e.target.value)}
+          placeholder="A short overview of the product..."
         />
 
-        <input
-          type="text"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+        <label>Details</label>
+        <textarea
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          placeholder="Specifics like material, size, usage..."
         />
 
-        <input
-          type="number"
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
+        <label>Trivia</label>
+        <textarea
+          value={trivia}
+          onChange={(e) => setTrivia(e.target.value)}
+          placeholder="Cultural background or interesting facts..."
         />
 
-        <input
-          type="number"
-          placeholder="Stock"
-          value={stock}
-          onChange={(e) => setStock(e.target.value)}
-        />
+        <label>Category</label>
+        <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} />
+
+        <label>Price</label>
+        <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+
+        <label>Stock</label>
+        <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} required />
 
         <input
           type="file"
-          multiple
           accept="image/*"
+          multiple
+          ref={imageInputRef}
           onChange={handleImagesChange}
+          style={{ display: "none" }}
         />
 
-        {/* Preview selected images */}
-        {previewImages.length > 0 && (
-          <div
-            className="preview-images"
-            style={{ display: "flex", gap: "10px", marginTop: "10px" }}
-          >
-            {previewImages.map((src, idx) => (
+        <button type="button" onClick={triggerFileInput}>
+          Add Images
+        </button>
+
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "15px" }}>
+          {previews.map((src, idx) => (
+            <div key={idx} style={{ position: "relative" }}>
               <img
-                key={idx}
                 src={src}
-                alt={`preview-${idx}`}
+                alt={`preview ${idx + 1}`}
                 style={{
-                  width: "80px",
-                  height: "80px",
+                  width: "120px",
+                  height: "120px",
                   objectFit: "cover",
-                  borderRadius: "5px",
+                  borderRadius: "8px",
                 }}
               />
-            ))}
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={() => handleRemoveImage(idx)}
+                style={{
+                  position: "absolute",
+                  top: "5px",
+                  right: "5px",
+                  background: "red",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "24px",
+                  height: "24px",
+                  cursor: "pointer",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
 
         <button type="submit" disabled={loading}>
           {loading ? "Adding..." : "Add Product"}

@@ -7,6 +7,7 @@ php artisan migrate
 php artisan make:seeder CordilleraProductSeeder
 php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder
 php artisan db:seed
+php artisan storage:link 
 php artisan serve
 
 env:
@@ -57,6 +58,9 @@ php artisan migrate --path=/database/migrations/2025_09_19_080001_create_donatio
 php artisan make:migration create_products_table
 php artisan make:controller CheckoutController
 php artisan migrate:status
+php artisan migrate:fresh
+php artisan migrate:fresh --seed
+
 Xampp
 3307 
 

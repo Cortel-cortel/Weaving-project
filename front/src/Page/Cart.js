@@ -1,11 +1,9 @@
-// src/Page/Cart.js
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Cart({ cart, setCart }) {
   const navigate = useNavigate();
 
-  // Load cart from localStorage when component mounts
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
@@ -41,7 +39,6 @@ export default function Cart({ cart, setCart }) {
   // Calculate total price
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Format price in PHP
   const formatPHP = (amount) =>
     `₱${Number(amount).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 

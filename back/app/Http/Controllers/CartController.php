@@ -8,18 +8,14 @@ use Illuminate\Http\JsonResponse;
 
 class CartController extends Controller
 {
-    /**
-     * List all cart items.
-     */
+    //List all cart items.
     public function index(): JsonResponse
     {
         $cartItems = Cart::all();
         return response()->json(['data' => $cartItems], 200);
     }
 
-    /**
-     * Add a product to the cart.
-     */
+    //Add a product to the cart
     public function store(Request $request): JsonResponse
     {
         $validatedData = $request->validate([
@@ -60,9 +56,7 @@ class CartController extends Controller
         }
     }
 
-    /**
-     * Show details of a specific cart item.
-     */
+    //Show details of a specific cart item.
     public function show(int $id): JsonResponse
     {
         $cartItem = Cart::find($id);
@@ -74,9 +68,7 @@ class CartController extends Controller
         return response()->json(['data' => $cartItem], 200);
     }
 
-    /**
-     * Update the quantity of a cart item.
-     */
+    //Update the quantity of a cart item.
     public function update(Request $request, int $id): JsonResponse
     {
         $cartItem = Cart::find($id);
@@ -98,9 +90,7 @@ class CartController extends Controller
         ], 200);
     }
 
-    /**
-     * Remove a cart item.
-     */
+    //Remove a cart item.
     public function destroy(int $id): JsonResponse
     {
         $cartItem = Cart::find($id);
@@ -114,9 +104,7 @@ class CartController extends Controller
         return response()->json(['message' => 'Cart item deleted successfully'], 200);
     }
 
-    /**
-     * Clear the entire cart.
-     */
+    //Clear the entire cart.
     public function destroyAll(): JsonResponse
     {
         Cart::query()->delete();

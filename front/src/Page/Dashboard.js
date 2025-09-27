@@ -1,4 +1,3 @@
-// src/Page/Dashboard.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DeletePrompt from "../Component/DeletePrompt";
@@ -18,13 +17,13 @@ export default function Dashboard({ handleLogout }) {
 
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [filterCategory, setFilterCategory] = useState(""); // For category filter
+  const [filterCategory, setFilterCategory] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  // Add/Edit Modal
+  // Modal state
   const [showProductModal, setShowProductModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [productData, setProductData] = useState({
@@ -32,16 +31,17 @@ export default function Dashboard({ handleLogout }) {
     barcode: "",
     category: "",
     description: "",
+    details: "",
+    trivia: "",
     price: "",
     stock: "",
-    image: null,
+    images: [],
   });
-  const [imagePreview, setImagePreview] = useState(null);
-  const [newImages, setNewImages] = useState([]);         // Newly added images
-  const [newPreviews, setNewPreviews] = useState([]);     // Preview of new images
-  const [existingImages, setExistingImages] = useState([]); // Existing images when editing
+  const [newImages, setNewImages] = useState([]);
+  const [newPreviews, setNewPreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
 
-  // Fetch products on load
+  // Fetch products
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -50,9 +50,11 @@ export default function Dashboard({ handleLogout }) {
     setLoading(true);
     try {
       const response = await axios.get("http://127.0.0.1:8000/api/products");
-      const productsWithImages = response.data.data.map(p => ({
+      const productsWithImages = response.data.data.map((p) => ({
         ...p,
-        image_url: p.image ? p.image_url || `http://127.0.0.1:8000/storage/${p.image}` : null
+        images: p.images
+          ? p.images.map((img) => `http://127.0.0.1:8000/storage/${img}`)
+          : [],
       }));
       setProducts(productsWithImages);
       setFilteredProducts(productsWithImages);
@@ -63,19 +65,19 @@ export default function Dashboard({ handleLogout }) {
     }
   };
 
-  // Filter products by category
+  // Filter products
   useEffect(() => {
     if (!filterCategory) {
       setFilteredProducts(products);
     } else {
-      setFilteredProducts(products.filter(p => p.category === filterCategory));
+      setFilteredProducts(products.filter((p) => p.category === filterCategory));
     }
   }, [filterCategory, products]);
 
-  // Generate Barcode
-  const generateBarcode = () => "BC" + Math.floor(100000 + Math.random() * 900000);
+  const generateBarcode = () =>
+    "BC" + Math.floor(100000 + Math.random() * 900000);
 
-  // Open Add Product Modal
+  // Open add modal
   const openAddModal = () => {
     setIsEditing(false);
     setProductData({
@@ -83,114 +85,94 @@ export default function Dashboard({ handleLogout }) {
       barcode: generateBarcode(),
       category: "",
       description: "",
+      details: "",
+      trivia: "",
       price: "",
       stock: "",
-      image: null,
+      images: [],
     });
-    setImagePreview(null);
     setNewImages([]);
     setNewPreviews([]);
     setExistingImages([]);
     setShowProductModal(true);
   };
 
-  // Open Edit Product Modal
+  // Open edit modal
   const openEditModal = (product) => {
     setIsEditing(true);
-    setProductData({
-      ...product,
-      image: null
-    });
-    setImagePreview(null);
+    setProductData({ ...product });
     setNewImages([]);
     setNewPreviews([]);
-    setExistingImages(product.images || []); // Load existing images if any
+    setExistingImages(product.images || []);
     setShowProductModal(true);
   };
 
-  // Handle form input changes
+  // Handle input changes
   const handleProductChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "image" && files && files[0]) {
-      const file = files[0];
-      setProductData((prev) => ({ ...prev, image: file }));
-      setImagePreview(URL.createObjectURL(file));
-    } else {
-      setProductData((prev) => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setProductData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle multiple new images
+  // Handle new image uploads
   const handleNewImagesChange = (e) => {
     const files = Array.from(e.target.files);
     setNewImages(files);
-    setNewPreviews(files.map(file => URL.createObjectURL(file)));
+    setNewPreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
-  // Upload image separately
-  const handleImageUpload = async (productId) => {
-    if (!productData.image) return;
-
-    const formData = new FormData();
-    formData.append("image", productData.image);
-
-    try {
-      const response = await axios.post(
-        `http://127.0.0.1:8000/api/products/${productId}/image`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      const updatedProduct = response.data.data;
-      setProducts(products.map(p => p.id === productId ? updatedProduct : p));
-      setFilteredProducts(filteredProducts.map(p => p.id === productId ? updatedProduct : p));
-      setImagePreview(updatedProduct.image_url);
-    } catch (err) {
-      console.error("Failed to upload image", err);
-    }
-  };
-
-  // Submit product details
+  // Save product
   const handleProductSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const { image, ...details } = productData;
 
     try {
+      let savedProduct;
+
       if (isEditing) {
         const response = await axios.put(
           `http://127.0.0.1:8000/api/products/${productData.id}`,
-          details
-        );
-        const savedProduct = response.data.data;
-
-        // Upload new images if any
-        if (newImages.length > 0) {
-          for (const img of newImages) {
-            const formData = new FormData();
-            formData.append("image", img);
-            await axios.post(
-              `http://127.0.0.1:8000/api/products/${savedProduct.id}/image`,
-              formData,
-              { headers: { "Content-Type": "multipart/form-data" } }
-            );
+          {
+            name: productData.name,
+            barcode: productData.barcode,
+            category: productData.category,
+            description: productData.description,
+            details: productData.details,
+            trivia: productData.trivia,
+            price: productData.price,
+            stock: productData.stock,
           }
-        }
-
-        fetchProducts(); // Refresh products
+        );
+        savedProduct = response.data.data;
       } else {
         const response = await axios.post(
           "http://127.0.0.1:8000/api/products",
-          details
+          {
+            name: productData.name,
+            barcode: productData.barcode,
+            category: productData.category,
+            description: productData.description,
+            details: productData.details,
+            trivia: productData.trivia,
+            price: productData.price,
+            stock: productData.stock,
+          }
         );
-        const savedProduct = response.data.data;
-
-        if (image) await handleImageUpload(savedProduct.id);
-        fetchProducts();
+        savedProduct = response.data.data;
       }
 
+      // Upload new images
+      if (newImages.length > 0) {
+        const formData = new FormData();
+        newImages.forEach((img) => formData.append("images[]", img));
+        await axios.post(
+          `http://127.0.0.1:8000/api/products/${savedProduct.id}/images`,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+      }
+
+      fetchProducts();
       setShowProductModal(false);
-      setImagePreview(null);
       setNewImages([]);
       setNewPreviews([]);
       setExistingImages([]);
@@ -200,7 +182,7 @@ export default function Dashboard({ handleLogout }) {
     }
   };
 
-  // Delete Product
+  // Delete product
   const handleDelete = (id) => {
     setSelectedId(id);
     setShowDeleteModal(true);
@@ -225,31 +207,68 @@ export default function Dashboard({ handleLogout }) {
 
   return (
     <>
-      {/* Navbar */}
-      <nav style={{ display: "flex", justifyContent: "space-between", padding: "15px 30px", backgroundColor: "#343a40", color: "#fff" }}>
+      <nav
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "15px 30px",
+          backgroundColor: "#343a40",
+          color: "#fff",
+        }}
+      >
         <h2>Admin Dashboard</h2>
         <div style={{ display: "flex", gap: "15px" }}>
-          <Button variant="light" onClick={() => navigate("/manage-orders")}>Manage Orders</Button>
-          <Button variant="light" onClick={() => navigate("/donations")}>Manage Donations</Button>
-          <FiLogOut size={24} style={{ cursor: "pointer" }} onClick={() => { handleLogout(); navigate("/login"); }} />
+          <Button variant="light" onClick={() => navigate("/manage-orders")}>
+            Manage Orders
+          </Button>
+          <Button variant="light" onClick={() => navigate("/donations")}>
+            Manage Donations
+          </Button>
+          <FiLogOut
+            size={24}
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              handleLogout();
+              navigate("/login");
+            }}
+          />
         </div>
       </nav>
 
-      {/* Summary + Add Button + Filter */}
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "20px", flexWrap: "wrap", gap: "15px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "20px",
+          flexWrap: "wrap",
+          gap: "15px",
+        }}
+      >
         <div>
           <h5>Total Products: {products.length}</h5>
-          <h6>Total Stock: {products.reduce((sum, product) => sum + product.stock, 0)}</h6>
+          <h6>
+            Total Stock:{" "}
+            {products.reduce((sum, product) => sum + product.stock, 0)}
+          </h6>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <Form.Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+        <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
+          <Form.Select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          >
             <option value="">-- All Categories --</option>
             <option value="Cordillera Inabel">Cordillera Inabel</option>
             <option value="Kalinga Weaving">Kalinga Weaving</option>
             <option value="Ikat">Ikat</option>
           </Form.Select>
-          <Button variant="primary" onClick={openAddModal}>+ Add Product</Button>
+          <Button
+            variant="primary"
+            onClick={openAddModal}
+            style={{ minWidth: "150px" }}
+          >
+            + Add Product
+          </Button>
         </div>
       </div>
 
@@ -258,11 +277,13 @@ export default function Dashboard({ handleLogout }) {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Image</th>
+              <th>Images</th>
               <th>Barcode</th>
               <th>Name</th>
               <th>Category</th>
               <th>Description</th>
+              <th>Details</th>
+              <th>Trivia</th>
               <th>Price</th>
               <th>Stock</th>
               <th style={{ width: "120px" }}>Action</th>
@@ -273,140 +294,302 @@ export default function Dashboard({ handleLogout }) {
               filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td>
-                    {product.image_url ? (
+                    {product.images &&
+                    product.images.filter((img) => img && img.trim() !== "")
+                      .length > 0 ? (
+                      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                        {product.images
+                          .filter((img) => img && img.trim() !== "")
+                          .map((img, idx) => (
+                            <img
+                              key={idx}
+                              src={`${img}?t=${new Date().getTime()}`}
+                              alt={product.name}
+                              style={{
+                                width: "60px",
+                                height: "60px",
+                                objectFit: "cover",
+                                borderRadius: "5px",
+                              }}
+                            />
+                          ))}
+                      </div>
+                    ) : (
                       <img
-                        src={`${product.image_url}?t=${new Date().getTime()}`}
-                        alt={product.name}
-                        style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "5px" }}
+                        src="/images/no-image.jpg"
+                        alt="No Image"
+                        style={{
+                          width: "60px",
+                          height: "60px",
+                          objectFit: "cover",
+                          borderRadius: "5px",
+                        }}
                       />
-                    ) : "No Image"}
+                    )}
                   </td>
                   <td>{product.barcode}</td>
                   <td>{product.name}</td>
                   <td>{product.category}</td>
                   <td>{product.description}</td>
-                  <td>{`₱${Number(product.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}</td>
+                  <td>{product.details}</td>
+                  <td>{product.trivia}</td>
+                  <td>
+                    ₱
+                    {Number(product.price).toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </td>
                   <td>{product.stock}</td>
                   <td>
                     <div style={{ display: "flex", gap: "5px" }}>
-                      <Button variant="warning" size="sm" onClick={() => openEditModal(product)}><RiEdit2Fill /></Button>
-                      <Button variant="danger" size="sm" onClick={() => handleDelete(product.id)}><RiDeleteBin5Fill /></Button>
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        onClick={() => openEditModal(product)}
+                      >
+                        <RiEdit2Fill />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(product.id)}
+                      >
+                        <RiDeleteBin5Fill />
+                      </Button>
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="8" className="text-center">No products found</td></tr>
+              <tr>
+                <td colSpan="10" className="text-center">
+                  No products found
+                </td>
+              </tr>
             )}
           </tbody>
         </Table>
       </div>
 
       {/* Delete Confirmation Modal */}
-      <DeletePrompt show={showDeleteModal} handleClose={() => setShowDeleteModal(false)} confirmDelete={confirmDelete} />
+      <DeletePrompt
+        show={showDeleteModal}
+        handleClose={() => setShowDeleteModal(false)}
+        confirmDelete={confirmDelete}
+      />
 
-      {/* Add/Edit Product Modal */}
-<Modal show={showProductModal} onHide={() => setShowProductModal(false)} size="lg" centered>
-  <Modal.Header closeButton>
-    <Modal.Title>{isEditing ? "Edit Product" : "Add New Product"}</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    <Form onSubmit={handleProductSubmit}>
-      <Row className="mb-3">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Product Name</Form.Label>
-            <Form.Control type="text" name="name" value={productData.name} onChange={handleProductChange} required />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Barcode</Form.Label>
-            <Form.Control type="text" name="barcode" value={productData.barcode} readOnly />
-          </Form.Group>
-        </Col>
-      </Row>
+      {/* Add/Edit Modal */}
+      <Modal
+        show={showProductModal}
+        onHide={() => setShowProductModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{isEditing ? "Edit Product" : "Add New Product"}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleProductSubmit}>
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Product Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="name"
+                    value={productData.name}
+                    onChange={handleProductChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Barcode</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="barcode"
+                    value={productData.barcode}
+                    readOnly
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-      <Row className="mb-3">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Category</Form.Label>
-            <Form.Select name="category" value={productData.category} onChange={handleProductChange} required>
-              <option value="">-- Select Category --</option>
-              <option value="Cordillera Inabel">Cordillera Inabel</option>
-              <option value="Kalinga Weaving">Kalinga Weaving</option>
-              <option value="Ikat">Ikat</option>
-            </Form.Select>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Price (₱)</Form.Label>
-            <Form.Control type="number" step="0.01" name="price" value={productData.price} onChange={handleProductChange} required />
-          </Form.Group>
-        </Col>
-      </Row>
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Category</Form.Label>
+                  <Form.Select
+                    name="category"
+                    value={productData.category}
+                    onChange={handleProductChange}
+                    required
+                  >
+                    <option value="">-- Select Category --</option>
+                    <option value="Cordillera Inabel">Cordillera Inabel</option>
+                    <option value="Kalinga Weaving">Kalinga Weaving</option>
+                    <option value="Ikat">Ikat</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Price (₱)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={productData.price}
+                    onChange={handleProductChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-      <Row className="mb-3">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Stock</Form.Label>
-            <Form.Control type="number" name="stock" value={productData.stock} onChange={handleProductChange} required />
-          </Form.Group>
-        </Col>
+            <Row className="mb-3">
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Stock</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="stock"
+                    value={productData.stock}
+                    onChange={handleProductChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
 
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Images</Form.Label>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              {/* Button to add new images */}
-              <Button variant="secondary" onClick={() => document.getElementById("imageUpload").click()}>+ Add Image</Button>
-              <input
-                type="file"
-                id="imageUpload"
-                accept="image/*"
-                multiple
-                style={{ display: "none" }}
-                onChange={handleNewImagesChange}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Images</Form.Label>
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => document.getElementById("imageUpload").click()}
+                    >
+                      + Add Images
+                    </Button>
+                    <input
+                      type="file"
+                      id="imageUpload"
+                      accept="image/*"
+                      multiple
+                      style={{ display: "none" }}
+                      onChange={handleNewImagesChange}
+                    />
+
+                    {existingImages.length > 0 &&
+                      existingImages.map((img, idx) => (
+                        <div
+                          key={idx}
+                          style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                        >
+                          <img
+                            src={img}
+                            alt={`Existing ${idx}`}
+                            style={{
+                              width: "80px",
+                              height: "80px",
+                              objectFit: "cover",
+                              borderRadius: "5px",
+                              border: "1px solid #ccc",
+                              marginBottom: "5px",
+                            }}
+                          />
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() =>
+                              setExistingImages((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      ))}
+
+                    {newPreviews.length > 0 &&
+                      newPreviews.map((preview, idx) => (
+                        <div
+                          key={idx}
+                          style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                        >
+                          <img
+                            src={preview}
+                            alt={`Preview ${idx}`}
+                            style={{
+                              width: "80px",
+                              height: "80px",
+                              objectFit: "cover",
+                              borderRadius: "5px",
+                              border: "1px solid #ccc",
+                              marginBottom: "5px",
+                            }}
+                          />
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => {
+                              setNewPreviews((prev) => prev.filter((_, i) => i !== idx));
+                              setNewImages((prev) => prev.filter((_, i) => i !== idx));
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                name="description"
+                value={productData.description}
+                onChange={handleProductChange}
               />
+            </Form.Group>
 
-              {/* Show previously uploaded images */}
-              {existingImages.length > 0 && existingImages.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`Existing ${idx}`}
-                  style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "5px", border: "1px solid #ccc" }}
-                />
-              ))}
+            <Form.Group className="mb-3">
+              <Form.Label>Details</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                name="details"
+                value={productData.details}
+                onChange={handleProductChange}
+              />
+            </Form.Group>
 
-              {/* Show new image previews */}
-              {newPreviews.length > 0 && newPreviews.map((preview, idx) => (
-                <img
-                  key={idx}
-                  src={preview}
-                  alt={`Preview ${idx}`}
-                  style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "5px", border: "1px solid #ccc" }}
-                />
-              ))}
+            <Form.Group className="mb-3">
+              <Form.Label>Trivia</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                name="trivia"
+                value={productData.trivia}
+                onChange={handleProductChange}
+              />
+            </Form.Group>
+
+            <div className="text-end">
+              <Button variant="secondary" onClick={() => setShowProductModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" className="ms-2">
+                {isEditing ? "Update Product" : "Save Product"}
+              </Button>
             </div>
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Form.Group className="mb-3">
-        <Form.Label>Description</Form.Label>
-        <Form.Control as="textarea" rows={2} name="description" value={productData.description} onChange={handleProductChange} />
-      </Form.Group>
-
-      <div className="text-end">
-        <Button variant="secondary" onClick={() => setShowProductModal(false)}>Cancel</Button>
-        <Button type="submit" variant="primary" className="ms-2">{isEditing ? "Update Product" : "Save Product"}</Button>
-      </div>
-    </Form>
-  </Modal.Body>
-</Modal>
-
+          </Form>
+        </Modal.Body>
+      </Modal>
     </>
   );
 }
