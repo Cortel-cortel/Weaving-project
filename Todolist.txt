@@ -1,6 +1,7 @@
 Laravel Commands:
 composer install
-cp .env.example .env
+New-Item -Path . -Name ".env.example" -ItemType "file"
+Copy-Item -Path ".env.example" -Destination ".env"
 php artisan key:generate
 php artisan migrate
 php artisan make:seeder CordilleraProductSeeder
@@ -8,14 +9,35 @@ php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder
 php artisan db:seed
 php artisan serve
 
-(igonre)
-php artisan make:command SeedAll
-php artisan db:seed-all
-php artisan make:model Product
-php artisan migrate --path=/database/migrations/2025_09_19_080001_create_donations_table.php
-php artisan make:migration create_products_table
-php artisan make:controller CheckoutController
-php artisan migrate:status
+env:
+APP_NAME=WeavingProject
+APP_ENV=local
+APP_KEY=base64:FZ3OqRIP+dPjYICXb0yR5KzI0gAJprUpliZGSejCMnM=
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
+
+LOG_CHANNEL=stack
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_DATABASE=weaving_project
+DB_USERNAME=root
+DB_PASSWORD=
+DB_PORT=3307
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=public
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+SESSION_DOMAIN=localhost
+SANCTUM_STATEFUL_DOMAINS=localhost:3000
+
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin123
 
 React Commands:
 npm install
@@ -27,6 +49,14 @@ npm install react-toastify
 npm install framer-motion
 npm start
 
+(igonre)
+php artisan make:command SeedAll
+php artisan db:seed-all
+php artisan make:model Product
+php artisan migrate --path=/database/migrations/2025_09_19_080001_create_donations_table.php
+php artisan make:migration create_products_table
+php artisan make:controller CheckoutController
+php artisan migrate:status
 Xampp
 3307 
 
