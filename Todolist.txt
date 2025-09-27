@@ -1,6 +1,5 @@
 Laravel Commands:
 composer install
-New-Item -Path . -Name ".env.example" -ItemType "file"
 Copy-Item -Path ".env.example" -Destination ".env"
 php artisan key:generate
 php artisan migrate
