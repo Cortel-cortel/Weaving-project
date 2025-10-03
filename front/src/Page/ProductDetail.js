@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Carousel } from "react-bootstrap";
@@ -15,11 +15,10 @@ export default function ProductDetail({ cart, setCart }) {
   const [quantity, setQuantity] = useState(1);
   const [otherProducts, setOtherProducts] = useState([]);
   const [toastVisible, setToastVisible] = useState(false);
-
   const [sortOption, setSortOption] = useState("alphabetical");
   const [filterCategory, setFilterCategory] = useState("all");
 
-// Static product data
+      // Static product data
      const productData = {
   "Cordillera Inabel Shawl": {
   images: [
@@ -123,18 +122,23 @@ export default function ProductDetail({ cart, setCart }) {
   trivia: "Wall decor in Kalinga weaving represents pride in identity and is often created to preserve cultural legacy. These pieces are cherished as visual narratives of heritage, reminding future generations of their ancestral roots."
   }
   };
+  
+  // Flying-to-cart animation states
+  const [flyImage, setFlyImage] = useState(null);
+  const [flyCoords, setFlyCoords] = useState({ x: 0, y: 0 });
+  const cartIconRef = useRef(null);
 
+  // ===============================
+  // Fetch product and other products
+  // ===============================
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/products/${productId}`
-        );
+        const res = await axios.get(`http://127.0.0.1:8000/api/products/${productId}`);
         const prod = res.data.data;
         if (!prod) throw new Error("Product not found");
 
-        const defaultImages =
-          productData[prod.name]?.images || ["/images/placeholder.png"];
+        const defaultImages = productData[prod.name]?.images || ["/images/placeholder.png"];
         const uploadedImages =
           prod.images && prod.images.length > 0
             ? prod.images.map((img) =>
@@ -188,8 +192,13 @@ export default function ProductDetail({ cart, setCart }) {
     fetchProduct();
   }, [productId]);
 
+  // ===============================
+  // Handle add to cart
+  // ===============================
   const handleAddToCart = () => {
     if (!product) return;
+
+    // Add to cart
     const exists = cart.find((item) => item.id === product.id);
     const updatedCart = exists
       ? cart.map((item) =>
@@ -197,20 +206,45 @@ export default function ProductDetail({ cart, setCart }) {
             ? { ...item, quantity: item.quantity + quantity }
             : item
         )
-      : [...cart, { ...product, quantity }];
+      : [
+          ...cart,
+          {
+            ...product,
+            quantity,
+            image_url: product.image_url || (product.images && product.images[0]),
+          },
+        ];
     setCart(updatedCart);
     localStorage.setItem("cart", JSON.stringify(updatedCart));
     localStorage.setItem("cartUpdated", Date.now());
+
+    // Flying image animation
+    const productImg = document.querySelector('.carousel-item.active img');
+    if (productImg && cartIconRef.current) {
+      const imgRect = productImg.getBoundingClientRect();
+      setFlyCoords({ x: imgRect.left, y: imgRect.top });
+      setFlyImage(product.image_url || (product.images && product.images[0]));
+      setTimeout(() => setFlyImage(null), 800);
+    }
+
+    // Toast
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2000);
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    navigate("/checkout", {
-      state: { buyNowProduct: { ...product, quantity } },
-    });
+const handleBuyNow = () => {
+  if (!product) return;
+  const buyNowProduct = {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    quantity,
+    image_url: product.image_url || product.images[0] || "/images/placeholder.png",
   };
+  navigate("/checkout", { state: { buyNowProduct } });
+};
+
+
 
   const handleShare = async () => {
     try {
@@ -221,29 +255,13 @@ export default function ProductDetail({ cart, setCart }) {
     }
   };
 
-  if (loading)
-    return (
-      <div style={{ textAlign: "center", marginTop: "120px" }}>
-        Loading product...
-      </div>
-    );
-  if (error)
-    return (
-      <div style={{ textAlign: "center", marginTop: "120px", color: "red" }}>
-        {error}
-      </div>
-    );
-  if (!product)
-    return (
-      <div style={{ textAlign: "center", marginTop: "120px" }}>
-        No product data available.
-      </div>
-    );
+  if (loading) return <div style={{ textAlign: "center", marginTop: "120px" }}>Loading product...</div>;
+  if (error) return <div style={{ textAlign: "center", marginTop: "120px", color: "red" }}>{error}</div>;
+  if (!product) return <div style={{ textAlign: "center", marginTop: "120px" }}>No product data available.</div>;
 
-  const images = product.images || ["/images/placeholder.png"];
+  const images = product.images || [];
   const categories = [...new Set(otherProducts.map((p) => p.category))];
 
-  // Filter + Sort
   let displayedProducts =
     filterCategory === "all"
       ? [...otherProducts]
@@ -258,82 +276,81 @@ export default function ProductDetail({ cart, setCart }) {
   }
 
   return (
-    <div
+    <div style={{ padding: "120px 20px 40px 20px", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
+      
+      {/* Flying Image Animation */}
+      {flyImage && cartIconRef.current && (
+        <motion.img
+          src={flyImage}
+          initial={{ top: flyCoords.y, left: flyCoords.x, width: 100, height: 100, position: "fixed", zIndex: 1000 }}
+          animate={{
+            top: cartIconRef.current.getBoundingClientRect().top,
+            left: cartIconRef.current.getBoundingClientRect().left,
+            width: 30,
+            height: 30,
+          }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          style={{ pointerEvents: "none", borderRadius: "12px" }}
+        />
+      )}
+
+      {/* Toast (Added to Cart) */}
+<AnimatePresence>
+  {toastVisible && (
+    <motion.div
+      initial={{ opacity: 0, y: -30, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -30, scale: 0.8 }}
+      transition={{ duration: 0.6, type: "spring", stiffness: 250 }}
       style={{
-        padding: "120px 20px 40px 20px",
-        maxWidth: "1000px",
-        margin: "0 auto",
-        position: "relative",
+        position: "fixed",
+        top: "120px",
+        left: "85%",
+        transform: "translateX(-50%)",
+        backgroundColor: "#4CAF50",
+        color: "#fff",
+        padding: "10px 18px",
+        borderRadius: "30px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: "bold",
+        fontSize: "0.9rem",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+        zIndex: 1000,
       }}
     >
-      <AnimatePresence>
-        {toastVisible && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            transition={{ duration: 0.4 }}
-            style={{
-              position: "fixed",
-              bottom: "30px",
-              right: "30px",
-              backgroundColor: "#4CAF50",
-              color: "#fff",
-              padding: "15px 20px",
-              borderRadius: "10px",
-              boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              zIndex: 1000,
-            }}
-          >
-            <FaCheck /> Added to cart!
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <h1
-        style={{
-          fontSize: "2.4rem",
-          fontWeight: "bold",
-          marginBottom: "30px",
-          textAlign: "center",
-        }}
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{ display: "flex", alignItems: "center", gap: "6px" }}
       >
+        <FaCheck size={18} /> Added!
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
+
+      {/* PRODUCT TITLE */}
+      <h1 style={{ fontSize: "2.4rem", fontWeight: "bold", marginBottom: "30px", textAlign: "center" }}>
         {product.name}
       </h1>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "40px",
-          flexWrap: "wrap",
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "30px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          style={{ flex: 1, minWidth: "350px" }}
-        >
+      {/* PRODUCT MAIN SECTION */}
+      <div style={{ display: "flex", flexDirection: "row", gap: "40px", flexWrap: "wrap", backgroundColor: "#fff", borderRadius: "12px", padding: "30px", boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}>
+        {/* IMAGES */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} style={{ flex: 1, minWidth: "350px" }}>
           <Carousel style={{ borderRadius: "12px", overflow: "hidden" }}>
             {images.map((src, idx) => (
               <Carousel.Item key={idx}>
                 <motion.img
                   src={src}
                   alt={`${product.name} ${idx + 1}`}
-                  style={{
-                    width: "100%",
-                    height: "450px",
-                    objectFit: "cover",
-                    borderRadius: "12px",
-                  }}
+                  style={{ width: "100%", height: "450px", objectFit: "cover", borderRadius: "12px" }}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
@@ -343,168 +360,64 @@ export default function ProductDetail({ cart, setCart }) {
           </Carousel>
         </motion.div>
 
-        <div
-          style={{
-            flex: 1,
-            minWidth: "350px",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <span
-            style={{
-              backgroundColor: "#ffe6e6",
-              color: "#b71c1c",
-              padding: "5px 12px",
-              borderRadius: "20px",
-              fontWeight: "bold",
-              width: "fit-content",
-              marginBottom: "15px",
-            }}
-          >
+        {/* PRODUCT INFO */}
+        <div style={{ flex: 1, minWidth: "350px", display: "flex", flexDirection: "column" }}>
+          <span style={{ backgroundColor: "#ffe6e6", color: "#b71c1c", padding: "5px 12px", borderRadius: "20px", fontWeight: "bold", width: "fit-content", marginBottom: "15px" }}>
             ₱{Number(product.price).toFixed(2)}
           </span>
 
-          <p
-            style={{
-              fontSize: "1rem",
-              color: "#555",
-              lineHeight: "1.8",
-              marginBottom: "25px",
-            }}
-          >
+          <p style={{ fontSize: "1rem", color: "#555", lineHeight: "1.8", marginBottom: "25px" }}>
             {product.description || "No description available."}
           </p>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "25px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "25px" }}>
             <label style={{ fontWeight: "bold" }}>Quantity:</label>
             <input
               type="number"
               min={1}
               max={10}
               value={quantity}
-              onChange={(e) =>
-                setQuantity(Math.min(10, Math.max(1, Number(e.target.value))))
-              }
-              style={{
-                width: "70px",
-                padding: "6px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
+              onChange={(e) => setQuantity(Math.min(10, Math.max(1, Number(e.target.value))))}
+              style={{ width: "70px", padding: "6px", borderRadius: "6px", border: "1px solid #ccc" }}
             />
           </div>
 
           <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
-            <button
-              onClick={handleAddToCart}
-              style={{
-                flex: 1,
-                padding: "12px",
-                fontWeight: "bold",
-                backgroundColor: "#b71c1c",
-                color: "#fff",
-                borderRadius: "10px",
-                border: "none",
-              }}
-            >
+            <button onClick={handleAddToCart} style={{ flex: 1, padding: "12px", fontWeight: "bold", backgroundColor: "#b71c1c", color: "#fff", borderRadius: "10px", border: "none" }}>
               Add to Cart
             </button>
-            <button
-              onClick={handleBuyNow}
-              style={{
-                flex: 1,
-                padding: "12px",
-                fontWeight: "bold",
-                backgroundColor: "#ff6666",
-                color: "#fff",
-                borderRadius: "10px",
-                border: "none",
-              }}
-            >
+            <button onClick={handleBuyNow} style={{ flex: 1, padding: "12px", fontWeight: "bold", backgroundColor: "#ff6666", color: "#fff", borderRadius: "10px", border: "none" }}>
               Buy Now
             </button>
           </div>
 
-          <button
-            onClick={handleShare}
-            style={{
-              padding: "10px",
-              backgroundColor: "#555",
-              color: "#fff",
-              borderRadius: "8px",
-              border: "none",
-            }}
-          >
+          <button onClick={handleShare} style={{ padding: "10px", backgroundColor: "#555", color: "#fff", borderRadius: "8px", border: "none" }}>
             Share
           </button>
         </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        style={{
-          marginTop: "50px",
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "25px",
-          boxShadow: "0 6px 20px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <h3 style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "1.4rem" }}>
-          About this Product
-        </h3>
-        <p>
-          <strong>Details:</strong> {product.details || "No details available."}
-        </p>
-        {product.trivia && (
-          <p style={{ marginTop: "10px" }}>
-            <strong>Trivia:</strong> {product.trivia}
-          </p>
-        )}
+      {/* PRODUCT DETAILS */}
+      <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.6 }} style={{ marginTop: "50px", backgroundColor: "#fff", borderRadius: "12px", padding: "25px", boxShadow: "0 6px 20px rgba(0, 0, 0, 0.1)" }}>
+        <h3 style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "1.4rem" }}>About this Product</h3>
+        <p><strong>Details:</strong> {product.details || "No details available."}</p>
+        {product.trivia && <p style={{ marginTop: "10px" }}><strong>Trivia:</strong> {product.trivia}</p>}
       </motion.div>
 
+      {/* OTHER PRODUCTS */}
       {otherProducts.length > 0 && (
         <div style={{ marginTop: "40px" }}>
-          <h3 style={{ fontWeight: "bold", marginBottom: "20px" }}>
-            You may also like
-          </h3>
+          <h3 style={{ fontWeight: "bold", marginBottom: "20px" }}>You may also like</h3>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              marginBottom: "20px",
-              flexWrap: "wrap",
-            }}
-          >
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              style={{ padding: "8px", borderRadius: "6px" }}
-            >
+          <div style={{ display: "flex", gap: "15px", marginBottom: "20px", flexWrap: "wrap" }}>
+            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ padding: "8px", borderRadius: "6px" }}>
               <option value="all">All Categories</option>
               {categories.map((cat, idx) => (
-                <option key={idx} value={cat}>
-                  {cat}
-                </option>
+                <option key={idx} value={cat}>{cat}</option>
               ))}
             </select>
 
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              style={{ padding: "8px", borderRadius: "6px" }}
-            >
+            <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ padding: "8px", borderRadius: "6px" }}>
               <option value="alphabetical">Alphabetical (A–Z)</option>
               <option value="priceLowHigh">Price: Low → High</option>
               <option value="priceHighLow">Price: High → Low</option>
@@ -520,43 +433,20 @@ export default function ProductDetail({ cart, setCart }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 whileHover={{ scale: 1.05 }}
-                style={{
-                  cursor: "pointer",
-                  width: "200px",
-                  border: "1px solid #ddd",
-                  borderRadius: "10px",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                  textAlign: "center",
-                  padding: "10px",
-                }}
+                style={{ cursor: "pointer", width: "200px", border: "1px solid #ddd", borderRadius: "10px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)", textAlign: "center", padding: "10px" }}
               >
-                <img
-                  src={(sp.images && sp.images[0]) || "/images/placeholder.png"}
-                  alt={sp.name}
-                  style={{
-                    width: "100%",
-                    height: "150px",
-                    objectFit: "cover",
-                    borderRadius: "6px",
-                  }}
-                />
-                <p
-                  style={{
-                    fontWeight: "bold",
-                    margin: "10px 0 5px 0",
-                  }}
-                >
-                  {sp.name}
-                </p>
-                <span style={{ color: "#b71c1c", fontWeight: "bold" }}>
-                  ₱{Number(sp.price).toFixed(2)}
-                </span>
+                <img src={(sp.images && sp.images[0]) || "/images/placeholder.png"} alt={sp.name} style={{ width: "100%", height: "150px", objectFit: "cover", borderRadius: "6px" }} />
+                <p style={{ fontWeight: "bold", margin: "10px 0 5px 0" }}>{sp.name}</p>
+                <span style={{ color: "#b71c1c", fontWeight: "bold" }}>₱{Number(sp.price).toFixed(2)}</span>
               </motion.div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Cart Icon Ref */}
+      <div ref={cartIconRef} style={{ position: "fixed", top: 20, right: 20 }}></div>
+
     </div>
   );
 }

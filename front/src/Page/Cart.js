@@ -47,18 +47,50 @@ export default function Cart({ cart, setCart }) {
       <h2 style={{ marginBottom: "30px" }}>Your Cart</h2>
 
       {cart.map(item => (
-        <div key={item.id} style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "15px",
-          borderBottom: "1px solid #ccc"
-        }}>
-          <div style={{ flex: 2 }}>
+        <div
+          key={item.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "15px",
+            borderBottom: "1px solid #ccc",
+            cursor: "pointer",
+          }}
+        >
+          {/* ✅ Product Image with Hover Zoom */}
+          <div
+            style={{ flex: 0.8, marginRight: "15px", overflow: "hidden", borderRadius: "12px" }}
+            onClick={() => navigate(`/product/${item.id}`)}
+          >
+            <img
+              src={item.image_url || item.image || "/images/no-image.jpg"}
+              alt={item.name}
+              onError={(e) => { e.target.src = "/images/no-image.jpg"; }}
+              style={{
+                width: "100px",
+                height: "100px",
+                objectFit: "cover",
+                borderRadius: "12px",
+                border: "1px solid #ccc",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                transition: "transform 0.3s ease",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"}
+              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+            />
+          </div>
+
+          {/* ✅ Product Info - Clickable */}
+          <div
+            style={{ flex: 2 }}
+            onClick={() => navigate(`/product/${item.id}`)}
+          >
             <strong>{item.name}</strong>
             <p style={{ margin: "5px 0", color: "#555" }}>{item.category}</p>
           </div>
 
+          {/* Quantity */}
           <div style={{ flex: 1 }}>
             <input
               type="number"
@@ -69,10 +101,12 @@ export default function Cart({ cart, setCart }) {
             />
           </div>
 
+          {/* Price */}
           <div style={{ flex: 1 }}>
             {formatPHP(item.price * item.quantity)}
           </div>
 
+          {/* Remove Button */}
           <div style={{ flex: 0.5 }}>
             <button
               onClick={() => handleRemove(item.id)}
@@ -91,6 +125,7 @@ export default function Cart({ cart, setCart }) {
         </div>
       ))}
 
+      {/* Total */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -102,6 +137,7 @@ export default function Cart({ cart, setCart }) {
         <span>{formatPHP(totalPrice)}</span>
       </div>
 
+      {/* Checkout Button */}
       <button
         onClick={() => navigate("/checkout")}
         style={{

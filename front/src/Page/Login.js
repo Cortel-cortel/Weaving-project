@@ -7,13 +7,15 @@ function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(""); // ✅ error state
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(""); // clear old error
 
     if (!email || !password) {
-      alert("Please enter email and password");
+      setError("❌ Please enter both email and password.");
       return;
     }
 
@@ -31,11 +33,15 @@ function Login({ onLogin }) {
 
         navigate(data.isAdmin ? "/dashboard" : "/home", { replace: true });
       } else {
-        alert("Invalid email or password");
+        setError(data.message || "❌ The email or password you entered is incorrect.");
       }
-    } catch (error) {
-      console.error("Login failed:", error);
-      alert("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Login failed:", err);
+      if (err.response?.data?.message) {
+        setError("❌ " + err.response.data.message);
+      } else {
+        setError("❌ Something went wrong. Please try again.");
+      }
     }
   };
 
@@ -53,23 +59,29 @@ function Login({ onLogin }) {
 
       <div className="login-container">
         <h2 className="login-title">Login</h2>
+
+        {/* ✅ Error Message Box */}
+        {error && <div className="error-box"><p>{error}</p></div>}
+
         <form onSubmit={handleSubmit} className="login-form">
+          {/* Email */}
           <input
             type="email"
             placeholder="Enter Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="login-input"
+            className={`login-input ${error.toLowerCase().includes("email") || error.toLowerCase().includes("password") ? "input-error" : ""}`}
             required
           />
 
+          {/* Password */}
           <div className="password-wrapper">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="password-input"
+              className={`password-input ${error.toLowerCase().includes("password") ? "input-error" : ""}`}
               required
             />
             <button
@@ -90,6 +102,29 @@ function Login({ onLogin }) {
           Don’t have an account? <Link to="/register">Register here</Link>
         </p>
       </div>
+
+      {/* ✅ Inline Error Styles */}
+      <style>
+        {`
+          .error-box {
+            background: #ffe6e6;
+            border: 1px solid red;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+            text-align: center;
+          }
+          .error-box p {
+            color: red;
+            font-size: 0.9rem;
+            margin: 0;
+          }
+          .input-error {
+            border: 1px solid red !important;
+            background-color: #fff5f5 !important;
+          }
+        `}
+      </style>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; 
 import { useParams } from "react-router-dom";
 import { Carousel, Button, Form, Row, Col, Modal } from "react-bootstrap";
 import axios from "axios";
@@ -115,13 +115,27 @@ export default function FundraiserDetail() {
 
   const [showDonate, setShowDonate] = useState(false);
   const [thankYouVisible, setThankYouVisible] = useState(false);
+  const [instructions, setInstructions] = useState(""); // ✅ Added instructions
   const [donorData, setDonorData] = useState({
     name: "",
     email: "",
     phone: "",
     amount: "",
     message: "",
+    payment_method: "", // ✅ Added payment method
   });
+
+  // Auto-fill name & email from registered user data
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user) {
+      setDonorData((prev) => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+      }));
+    }
+  }, []);
 
   if (!fundraiser) {
     return (
@@ -131,52 +145,74 @@ export default function FundraiserDetail() {
     );
   }
 
-const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  setDonorData((prev) => ({ ...prev, [name]: value }));
-};
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setDonorData((prev) => ({ ...prev, [name]: value }));
 
-  // Submit donation
-const handleDonateSubmit = async (e) => {
-  e.preventDefault();
-
-  const payload = {
-    name: donorData.name,
-    email: donorData.email || null, 
-    phone: donorData.phone,
-    amount: donorData.amount,
-    fundraiser: fundraiser.name,
-    message: donorData.message,
+    // ✅ Show payment instructions dynamically
+    if (name === "payment_method") {
+      switch (value) {
+        case "gcash":
+          setInstructions("📱 Send your donation to GCash Number: 09XXXXXXXXX");
+          break;
+        case "paymaya":
+          setInstructions("💳 Pay via PayMaya Number: 09XXXXXXXXX");
+          break;
+        case "bank":
+          setInstructions("🏦 Bank Transfer - Account Name: Threaditional Org, Account No: 1234-5678-9012, BDO");
+          break;
+        case "credit":
+          setInstructions("💳 Enter your Credit Card details securely on the next step.");
+          break;
+        default:
+          setInstructions("");
+      }
+    }
   };
 
-  try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/donations",
-      payload,
-      { headers: { Accept: "application/json" } }
-    );
+  // Submit donation
+  const handleDonateSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      name: donorData.name,
+      email: donorData.email || null, 
+      phone: donorData.phone,
+      amount: donorData.amount,
+      fundraiser: fundraiser.name,
+      message: donorData.message,
+      payment_method: donorData.payment_method, // ✅ include payment method
+    };
+
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/donations",
+        payload,
+        { headers: { Accept: "application/json" } }
+      );
 
       console.log("Donation saved:", response.data);
 
-    setThankYouVisible(true);
-    setDonorData({ name: "", email: "", phone: "", amount: "", message: "" });
+      setThankYouVisible(true);
+      setDonorData((prev) => ({ ...prev, phone: "", amount: "", message: "", payment_method: "" }));
+      setInstructions("");
 
       setTimeout(() => {
         setShowDonate(false);
         setThankYouVisible(false);
       }, 3000);
 
-  } catch (err) {
-    console.error("Donation error:", err);
-    if (err.response) {
-      alert(err.response.data.message || "Failed to save donation. Please check your input.");
-    } else if (err.request) {
-      alert("No response from server. Is backend running?");
-    } else {
-      alert("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Donation error:", err);
+      if (err.response) {
+        alert(err.response.data.message || "Failed to save donation. Please check your input.");
+      } else if (err.request) {
+        alert("No response from server. Is backend running?");
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
     }
-  }
-};
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -284,16 +320,16 @@ const handleDonateSubmit = async (e) => {
           ) : (
             <Form onSubmit={handleDonateSubmit}>
               <Row className="mb-3">
-              <Col>
-    <Form.Label>Name</Form.Label>
-    <Form.Control
-      type="text"
-      name="name"
-      value={donorData.name}
-      onChange={handleInputChange}
-      required
-    />
-  </Col>
+                <Col>
+                  <Form.Label>Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="name"
+                    value={donorData.name}
+                    onChange={handleInputChange}
+                    readOnly
+                  />
+                </Col>
                 <Col>
                   <Form.Label>Email</Form.Label>
                   <Form.Control
@@ -301,21 +337,21 @@ const handleDonateSubmit = async (e) => {
                     name="email"
                     value={donorData.email}
                     onChange={handleInputChange}
-                    required
+                    readOnly
                   />
                 </Col>
               </Row>
 
               <Row className="mb-3">
                 <Col>
-                   <Form.Label>Contact Number</Form.Label>
-    <Form.Control
-      type="text"
-      name="phone"   
-      value={donorData.phone}
-      onChange={handleInputChange}
-      required
-    />
+                  <Form.Label>Contact Number</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="phone"   
+                    value={donorData.phone}
+                    onChange={handleInputChange}
+                    required
+                  />
                 </Col>
                 <Col>
                   <Form.Label>Amount (₱)</Form.Label>
@@ -329,6 +365,32 @@ const handleDonateSubmit = async (e) => {
                   />
                 </Col>
               </Row>
+
+              {/* ✅ Payment Method */}
+              <Row className="mb-3">
+                <Col>
+                  <Form.Label>Payment Method</Form.Label>
+                  <Form.Select
+                    name="payment_method"
+                    value={donorData.payment_method}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">-- Select Payment Method --</option>
+                    <option value="gcash">GCash</option>
+                    <option value="paymaya">PayMaya</option>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="credit">Credit Card</option>
+                  </Form.Select>
+                </Col>
+              </Row>
+
+              {/* ✅ Instructions Box */}
+              {instructions && (
+                <div className="alert alert-info mb-3" style={{ fontSize: "0.9rem" }}>
+                  {instructions}
+                </div>
+              )}
 
               <Form.Group className="mb-3">
                 <Form.Label>Message (Optional)</Form.Label>

@@ -44,36 +44,37 @@ class AuthController extends Controller
     /**
      * Login user or admin.
      */
-    public function login(Request $request)
-    {
-        // Validate input
-        $request->validate([
-            'email'    => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+public function login(Request $request)
+{
+    // Validate input
+    $request->validate([
+        'email'    => 'required|string|email',
+        'password' => 'required|string',
+    ]);
 
-        $user = User::where('email', $request->email)->first();
+    $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials',
-            ], 401);
-        }
-
-        // Create token
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Determine redirect route
-        $redirect = $user->role === 'admin' ? '/dashboard' : '/home';
-
+    // Security best practice: don't reveal if email exists or not
+    if (!$user || !Hash::check($request->password, $user->password)) {
         return response()->json([
-            'success'  => true,
-            'message'  => 'Login successful',
-            'user'     => $user,
-            'isAdmin'  => $user->role === 'admin',
-            'token'    => $token,
-            'redirect' => $redirect,
-        ]);
+            'success' => false,
+            'message' => 'The email or password you entered is incorrect. Please try again.',
+        ], 401);
     }
+
+    // Create token
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    // Determine redirect route
+    $redirect = $user->role === 'admin' ? '/dashboard' : '/home';
+
+    return response()->json([
+        'success'  => true,
+        'message'  => 'Login successful! Welcome back, ' . $user->name . '.',
+        'user'     => $user,
+        'isAdmin'  => $user->role === 'admin',
+        'token'    => $token,
+        'redirect' => $redirect,
+    ]);
+}
 }

@@ -1,6 +1,5 @@
 Laravel Commands:
 composer install
-New-Item -Path . -Name ".env.example" -ItemType "file"
 Copy-Item -Path ".env.example" -Destination ".env"
 php artisan key:generate
 php artisan migrate
@@ -10,7 +9,7 @@ php artisan db:seed
 php artisan storage:link 
 php artisan serve
 
-env:
+Paste this in env:
 APP_NAME=WeavingProject
 APP_ENV=local
 APP_KEY=base64:FZ3OqRIP+dPjYICXb0yR5KzI0gAJprUpliZGSejCMnM=

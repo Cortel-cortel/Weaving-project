@@ -1,56 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
-import "../App.css";
 
-export default function Navbar({ onLogout, role }) {
+export default function Navbar({ onLogout, role, cart }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [cartCount, setCartCount] = useState(0);
 
   const showBackButton = location.pathname !== "/home";
 
-  // Fetch cart count (only for users)
-  const fetchCartCount = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const { data } = await axios.get("http://127.0.0.1:8000/api/cart", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const totalItems = data.data.reduce((acc, item) => acc + item.quantity, 0);
-      setCartCount(totalItems);
-    } catch (error) {
-      console.error("Failed to fetch cart count:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (role === "user") {
-      fetchCartCount();
-      const interval = setInterval(fetchCartCount, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [role]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("isAdmin");
-    sessionStorage.clear();
-
-    if (typeof onLogout === "function") onLogout();
-
-    navigate("/login", { replace: true });
-  };
+  // 👇 count unique items in cart
+  const cartCount = cart.length;
 
   if (role !== "user") return null;
 
   return (
     <nav
-      className="navbar"
       style={{
         position: "fixed",
         top: 0,
@@ -77,16 +40,6 @@ export default function Navbar({ onLogout, role }) {
               color: "#fff",
               fontSize: "1.5rem",
               cursor: "pointer",
-              outline: "none",
-              transition: "color 0.2s, transform 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#ff9999";
-              e.currentTarget.style.transform = "scale(1.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#fff";
-              e.currentTarget.style.transform = "scale(1)";
             }}
           >
             ←
@@ -95,6 +48,7 @@ export default function Navbar({ onLogout, role }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {/* Cart Button */}
         <button
           onClick={() => navigate("/cart")}
           style={{
@@ -106,10 +60,7 @@ export default function Navbar({ onLogout, role }) {
             padding: "6px 12px",
             cursor: "pointer",
             fontWeight: "bold",
-            transition: "background-color 0.2s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#ff9999")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
         >
           🛒 Cart
           {cartCount > 0 && (
@@ -131,8 +82,14 @@ export default function Navbar({ onLogout, role }) {
           )}
         </button>
 
+        {/* Logout Button */}
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            if (typeof onLogout === "function") {
+              onLogout(); // 👈 call parent App's logout
+              navigate("/login", { replace: true }); // redirect to login
+            }
+          }}
           style={{
             backgroundColor: "#ff6666",
             color: "#fff",
@@ -141,10 +98,7 @@ export default function Navbar({ onLogout, role }) {
             padding: "6px 12px",
             cursor: "pointer",
             fontWeight: "bold",
-            transition: "background-color 0.2s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#ff9999")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ff6666")}
         >
           Logout
         </button>

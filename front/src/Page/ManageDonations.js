@@ -28,7 +28,7 @@ export default function ManageDonations({ handleLogout }) {
   // Fetch donations
   const fetchDonations = async () => {
     try {
-      const response = await api.get("/donations"); // ✅ no need headers
+      const response = await api.get("/donations"); 
       setDonations(response.data.data || []);
     } catch (err) {
       console.error(err);
@@ -89,6 +89,9 @@ export default function ManageDonations({ handleLogout }) {
         <div style={{ display: "flex", gap: "15px" }}>
           <Button variant="light" onClick={() => navigate("/dashboard")}>
             Back to Dashboard
+          </Button>
+          <Button variant="success" onClick={() => navigate("/summarize-donation")}>
+            Summarize Donations
           </Button>
           <FiLogOut
             size={24}

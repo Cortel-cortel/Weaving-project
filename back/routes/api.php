@@ -51,7 +51,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Checkout
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
-    // Orders
+    // Order
     Route::get('/orders', [OrderController::class, 'index']);      
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
