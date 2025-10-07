@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../App.css";
 
-//Category
 const products = [
   { id: "ikat1", name: "Ikat", img: "/images/ikat.jpg" },
   { id: "inabel1", name: "Inabel", img: "/images/inabel.jpg" },
@@ -12,177 +11,184 @@ const products = [
 const Home = () => {
   const navigate = useNavigate();
   const [role] = useState(localStorage.getItem("role") || "user");
-  const [startIndex, setStartIndex] = useState(0);
-  const [hoverArrow, setHoverArrow] = useState("");
   const [hoverView, setHoverView] = useState(null);
 
-  const handlePrev = () =>
-    setStartIndex((prev) => (prev - 1 + products.length) % products.length);
-  const handleNext = () => setStartIndex((prev) => (prev + 1) % products.length);
-
   const handleView = (product) => {
-    if (role === "admin") {
-      navigate("/dashboard");
-    } else {
+    if (role === "admin") navigate("/dashboard");
+    else {
       const category = product.id.toLowerCase().replace(/\d+$/, "");
       navigate(`/products/${category}`);
     }
   };
 
-  const visibleProducts = [
-    products[startIndex],
-    products[(startIndex + 1) % products.length],
-    products[(startIndex + 2) % products.length],
-  ];
-
   return (
-    <div className="home-page">
+    <div className="home-page" style={{ backgroundColor: "#fafafa" }}>
+      {/* HERO SECTION */}
       <div
         className="hero-section"
-        style={{ height: "50vh", position: "relative", marginTop: "55px" }}
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "65vh",
+          minHeight: "380px",
+          marginTop: "65px",
+          overflow: "hidden",
+          borderBottom: "4px solid #b71c1c",
+        }}
       >
         <img
           src="/images/hero-banner.jpg"
           alt="Hero Banner"
-          className="hero-image"
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(65%)",
+            transition: "transform 8s ease",
+          }}
+          onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
+          onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
         />
         <div
-          className="hero-text"
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            color: "white",
-            fontSize: "8rem",
-            fontWeight: "1000",
-            textShadow: "4px 4px 14px rgba(0,0,0,0.9)",
+            color: "#fff",
             textAlign: "center",
-            letterSpacing: "4px",
+            maxWidth: "700px",
+            padding: "0 20px",
           }}
         >
-          <h1 style={{ margin: 0 }}>Welcome to Threaditional</h1>
+          <h1
+            style={{
+              fontSize: "clamp(1.8rem, 4vw, 3rem)",
+              fontWeight: "800",
+              letterSpacing: "1px",
+              marginBottom: "10px",
+              textShadow: "2px 2px 10px rgba(0,0,0,0.6)",
+            }}
+          >
+            Weaving Culture into Modern Fashion
+          </h1>
+          <p
+            style={{
+              fontSize: "clamp(1rem, 2vw, 1.3rem)",
+              lineHeight: "1.5",
+              textShadow: "2px 2px 8px rgba(0,0,0,0.4)",
+            }}
+          >
+            Discover the artistry of Filipino handwoven textiles and their timeless beauty.
+          </p>
         </div>
       </div>
 
-      <div
-        className="carousel-container"
+      {/* TEXTILE SECTION */}
+      <section
         style={{
-          overflow: "hidden",
-          maxWidth: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          padding: "60px 0",
+          padding: "80px 5%",
+          textAlign: "center",
+          backgroundColor: "#fff",
         }}
       >
-        <button
-          className="arrow-btn left"
-          onClick={handlePrev}
-          onMouseEnter={() => setHoverArrow("left")}
-          onMouseLeave={() => setHoverArrow("")}
+        <h2
           style={{
-            position: "absolute",
-            left: "7%",
-            fontSize: "2.8rem",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: hoverArrow === "left" ? "#ff9999" : "#b71c1c",
+            fontSize: "2rem",
+            fontWeight: "700",
+            color: "#222",
+            marginBottom: "50px",
           }}
         >
-          ❮
-        </button>
+          Explore Our Signature Textiles
+        </h2>
 
         <div
-          className="carousel"
           style={{
             display: "flex",
-            gap: "45px",
             justifyContent: "center",
-            alignItems: "center",
+            gap: "30px",
             flexWrap: "nowrap",
-            width: "85%",
+            overflowX: "auto",
+            scrollBehavior: "smooth",
+            paddingBottom: "20px",
           }}
         >
-          {visibleProducts.map((product) => (
+          {products.map((product) => (
             <div
-                key={product.id}
-                className="card"
-                style={{
-                  flex: "0 0 auto",
-                  width: "320px",
-                  borderRadius: "18px",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  textAlign: "center",
-                  backgroundColor: "#fff",
-                  transition: "all 0.35s ease",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.03)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-                }}
-              >
-
+              key={product.id}
+              style={{
+                flex: "0 0 320px",
+                borderRadius: "18px",
+                overflow: "hidden",
+                backgroundColor: "#fff",
+                boxShadow: "0 4px 18px rgba(0,0,0,0.1)",
+                transition: "transform 0.4s ease, box-shadow 0.4s ease",
+                cursor: "pointer",
+              }}
+              onClick={() => handleView(product)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-8px)";
+                e.currentTarget.style.boxShadow =
+                  "0 10px 28px rgba(0,0,0,0.25)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 18px rgba(0,0,0,0.1)";
+              }}
+            >
               <img
                 src={product.img}
                 alt={product.name}
-                style={{ width: "100%", height: "300px", objectFit: "cover" }}
-              />
-              <h3 style={{ margin: "18px 0", fontSize: "1.6rem" }}>
-                {product.name}
-              </h3>
-              <button
-                className="view-btn"
-                onClick={() => handleView(product)}
-                onMouseEnter={() => setHoverView(product.id)}
-                onMouseLeave={() => setHoverView(null)}
                 style={{
-                  backgroundColor:
-                    hoverView === product.id ? "#ff9999" : "#b71c1c",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "10px",
-                  padding: "14px 22px",
-                  marginBottom: "18px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  transition: "all 0.3s ease",
+                  width: "100%",
+                  height: "220px",
+                  objectFit: "cover",
+                  transition: "transform 0.5s ease",
                 }}
-              >
-                View
-              </button>
+                onMouseEnter={(e) => (e.target.style.transform = "scale(1.08)")}
+                onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
+              />
+              <div style={{ padding: "20px" }}>
+                <h3
+                  style={{
+                    fontSize: "1.4rem",
+                    color: "#333",
+                    marginBottom: "15px",
+                    fontWeight: "700",
+                  }}
+                >
+                  {product.name}
+                </h3>
+                <button
+                  onClick={() => handleView(product)}
+                  onMouseEnter={() => setHoverView(product.id)}
+                  onMouseLeave={() => setHoverView(null)}
+                  style={{
+                    backgroundColor:
+                      hoverView === product.id ? "#d32f2f" : "#b71c1c",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "10px 22px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                    transition: "all 0.3s ease",
+                    boxShadow:
+                      hoverView === product.id
+                        ? "0 6px 14px rgba(0,0,0,0.25)"
+                        : "0 3px 8px rgba(0,0,0,0.15)",
+                  }}
+                >
+                  View Textile
+                </button>
+              </div>
             </div>
           ))}
         </div>
-
-        <button
-          className="arrow-btn right"
-          onClick={handleNext}
-          onMouseEnter={() => setHoverArrow("right")}
-          onMouseLeave={() => setHoverArrow("")}
-          style={{
-            position: "absolute",
-            right: "7%",
-            fontSize: "2.8rem",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: hoverArrow === "right" ? "#ff9999" : "#b71c1c",
-          }}
-        >
-          ❯
-        </button>
-      </div>
+      </section>
     </div>
   );
 };

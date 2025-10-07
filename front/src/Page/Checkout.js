@@ -6,12 +6,8 @@ export default function Checkout({ cart, setCart }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if Buy Now product exists
   const buyNowProduct = location.state?.buyNowProduct || null;
-
-  const [checkoutItems, setCheckoutItems] = useState(
-    buyNowProduct ? [buyNowProduct] : cart
-  );
+  const [checkoutItems, setCheckoutItems] = useState([]);
 
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -22,7 +18,24 @@ export default function Checkout({ cart, setCart }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Autofill name & email from localStorage.user
+  // 🧩 Load checkout items
+  useEffect(() => {
+    if (buyNowProduct) {
+      setCheckoutItems([buyNowProduct]);
+    } else {
+      const storedCheckout = localStorage.getItem("checkoutItems");
+      if (storedCheckout) {
+        setCheckoutItems(JSON.parse(storedCheckout));
+      } else {
+        const storedCart = localStorage.getItem("cart");
+        if (storedCart) {
+          setCheckoutItems(JSON.parse(storedCart));
+        }
+      }
+    }
+  }, [buyNowProduct]);
+
+  // 🧩 Autofill name & email from localStorage.user
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
@@ -31,45 +44,32 @@ export default function Checkout({ cart, setCart }) {
     }
   }, []);
 
-  // Total calculation
+  // 🧮 Total calculation
   const total = checkoutItems.reduce(
     (sum, item) => sum + Number(item.price) * Number(item.quantity),
     0
   );
 
-  // Handle quantity change
+  // 🧩 Handle quantity and remove
   const handleQuantityChange = (productId, qty) => {
     if (qty < 1) return;
     const updatedItems = checkoutItems.map((item) =>
       item.id === productId ? { ...item, quantity: qty } : item
     );
     setCheckoutItems(updatedItems);
-
-    // Also update cart if not Buy Now
-    if (!buyNowProduct) {
-      setCart(updatedItems);
-      localStorage.setItem("cart", JSON.stringify(updatedItems));
-    }
   };
 
-  // Remove item
   const handleRemove = (productId) => {
     const updatedItems = checkoutItems.filter((item) => item.id !== productId);
     setCheckoutItems(updatedItems);
-    if (!buyNowProduct) {
-      setCart(updatedItems);
-      localStorage.setItem("cart", JSON.stringify(updatedItems));
-    }
   };
 
-  // Format currency
   const formatPHP = (amount) =>
     `₱${Number(amount).toLocaleString("en-PH", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
 
-  // Estimated delivery
   const estimatedDelivery = () => {
     const now = new Date();
     const delivery = new Date(now.setDate(now.getDate() + 6));
@@ -81,7 +81,6 @@ export default function Checkout({ cart, setCart }) {
     });
   };
 
-  // Payment instructions
   useEffect(() => {
     switch (paymentMethod) {
       case "cod":
@@ -105,12 +104,13 @@ export default function Checkout({ cart, setCart }) {
     }
   }, [paymentMethod]);
 
+  // ✅ Confirm order
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
     setError("");
 
     if (!checkoutItems.length) {
-      setError("Your cart is empty.");
+      setError("No items selected for checkout.");
       return;
     }
 
@@ -129,7 +129,6 @@ export default function Checkout({ cart, setCart }) {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-
       const response = await axios.post(
         "http://127.0.0.1:8000/api/checkout",
         payload,
@@ -137,11 +136,36 @@ export default function Checkout({ cart, setCart }) {
       );
 
       if (response.data.success) {
-        // Clear only cart if Buy Now
+        // ✅ Save to OrdersPage (localStorage)
+        const newOrder = {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          items: checkoutItems.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          total: total,
+          status: "Pending",
+        };
+
+        const previousOrders =
+          JSON.parse(localStorage.getItem("userOrders")) || [];
+        localStorage.setItem(
+          "userOrders",
+          JSON.stringify([...previousOrders, newOrder])
+        );
+
+        // ✅ Clear purchased items from cart
         if (!buyNowProduct) {
-          setCart([]);
-          localStorage.removeItem("cart");
+          const remainingCart = cart.filter(
+            (item) => !checkoutItems.some((c) => c.id === item.id)
+          );
+          setCart(remainingCart);
+          localStorage.setItem("cart", JSON.stringify(remainingCart));
+          localStorage.removeItem("checkoutItems");
         }
+
         navigate("/checkout-success");
       } else {
         setError(response.data.message || "Checkout failed. Please try again.");
@@ -159,7 +183,7 @@ export default function Checkout({ cart, setCart }) {
   if (!checkoutItems.length) {
     return (
       <div style={{ textAlign: "center", marginTop: "100px" }}>
-        Your cart is empty.
+        No selected items to checkout.
       </div>
     );
   }
@@ -190,7 +214,15 @@ export default function Checkout({ cart, setCart }) {
         borderRadius: "10px",
       }}
     >
-      <h2 style={{ textAlign: "center", marginBottom: "20px", marginTop: "20px"}}>Checkout</h2>
+      <h2
+        style={{
+          textAlign: "center",
+          marginBottom: "20px",
+          marginTop: "20px",
+        }}
+      >
+        Checkout
+      </h2>
 
       {error && <div style={{ color: "red", marginBottom: "15px" }}>{error}</div>}
 
@@ -216,7 +248,12 @@ export default function Checkout({ cart, setCart }) {
             <img
               src={item.image_url || item.image || "/images/no-image.jpg"}
               alt={item.name}
-              style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "6px" }}
+              style={{
+                width: "60px",
+                height: "60px",
+                objectFit: "cover",
+                borderRadius: "6px",
+              }}
             />
             <span style={{ flex: 1, marginLeft: "10px" }}>{item.name}</span>
             <input
@@ -228,7 +265,9 @@ export default function Checkout({ cart, setCart }) {
               }
               style={{ width: "60px", marginRight: "10px" }}
             />
-            <span style={{ width: "100px" }}>{formatPHP(item.price * item.quantity)}</span>
+            <span style={{ width: "100px" }}>
+              {formatPHP(item.price * item.quantity)}
+            </span>
             {!buyNowProduct && (
               <button
                 onClick={() => handleRemove(item.id)}
@@ -259,13 +298,7 @@ export default function Checkout({ cart, setCart }) {
           <span>Total:</span>
           <span>{formatPHP(total)}</span>
         </div>
-        <div
-          style={{
-            marginTop: "5px",
-            fontSize: "0.9rem",
-            color: "#555",
-          }}
-        >
+        <div style={{ marginTop: "5px", fontSize: "0.9rem", color: "#555" }}>
           Estimated Delivery: {estimatedDelivery()}
         </div>
       </div>
